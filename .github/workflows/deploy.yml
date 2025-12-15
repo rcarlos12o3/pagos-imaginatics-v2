@@ -40,13 +40,13 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
     - name: Copy .env
       run: |
         cp .env.example .env
         php artisan key:generate
-
-    - name: Install Composer dependencies
-      run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
     - name: Install NPM dependencies
       run: npm ci
