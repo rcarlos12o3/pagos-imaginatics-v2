@@ -3,6 +3,72 @@
 @section('title', 'Pagos Pendientes')
 
 @section('content')
+<div x-data="{
+    busqueda: '{{ $busqueda ?? '' }}',
+    filtro: '{{ $filtro }}',
+    servicioId: '{{ $servicioId }}',
+
+    get serviciosFiltrados() {
+        let servicios = Array.from(document.querySelectorAll('tbody tr[data-servicio]'));
+
+        return servicios.filter(row => {
+            const texto = row.dataset.searchText.toLowerCase();
+            const urgencia = row.dataset.urgencia;
+            const servId = row.dataset.servicioId;
+
+            // Filtro de búsqueda
+            if (this.busqueda && !texto.includes(this.busqueda.toLowerCase())) {
+                return false;
+            }
+
+            // Filtro de urgencia
+            if (this.filtro !== 'todos' && urgencia !== this.filtro) {
+                return false;
+            }
+
+            // Filtro de servicio
+            if (this.servicioId && servId !== this.servicioId) {
+                return false;
+            }
+
+            return true;
+        });
+    }
+}" x-init="$watch('busqueda', () => filtrarTabla()); $watch('filtro', () => filtrarTabla()); $watch('servicioId', () => filtrarTabla())">
+
+<script>
+function filtrarTabla() {
+    const servicios = Array.from(document.querySelectorAll('tbody tr[data-servicio]'));
+    const busqueda = document.querySelector('[x-model=busqueda]')?.value?.toLowerCase() || '';
+    const filtro = document.querySelector('[x-model=filtro]')?.value || 'todos';
+    const servicioId = document.querySelector('[x-model=servicioId]')?.value || '';
+
+    let visibles = 0;
+
+    servicios.forEach(row => {
+        const texto = row.dataset.searchText.toLowerCase();
+        const urgencia = row.dataset.urgencia;
+        const servId = row.dataset.servicioId;
+
+        const coincideBusqueda = !busqueda || texto.includes(busqueda);
+        const coincideUrgencia = filtro === 'todos' || urgencia === filtro;
+        const coincideServicio = !servicioId || servId === servicioId;
+
+        if (coincideBusqueda && coincideUrgencia && coincideServicio) {
+            row.style.display = '';
+            visibles++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Mostrar/ocultar mensaje de sin resultados
+    const emptyRow = document.querySelector('tr[data-empty]');
+    if (emptyRow) {
+        emptyRow.style.display = visibles === 0 ? '' : 'none';
+    }
+}
+</script>
 <!-- Métricas -->
 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
     <div class="bg-red-50 rounded-lg shadow-sm p-3">
@@ -35,40 +101,33 @@
     </div>
 </div>
 
-<!-- Filtros -->
+<!-- Filtros en Tiempo Real -->
 <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-    <form method="GET" action="{{ route('pagos-pendientes.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Urgencia</label>
-            <select name="filtro" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="todos" {{ $filtro === 'todos' ? 'selected' : '' }}>Todos</option>
-                <option value="muy_vencido" {{ $filtro === 'muy_vencido' ? 'selected' : '' }}>Muy Vencidos</option>
-                <option value="vencido" {{ $filtro === 'vencido' ? 'selected' : '' }}>Vencidos</option>
-                <option value="proximo_vencer" {{ $filtro === 'proximo_vencer' ? 'selected' : '' }}>Próximos a Vencer</option>
+            <select x-model="filtro" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="todos">Todos</option>
+                <option value="muy_vencido">Muy Vencidos</option>
+                <option value="vencido">Vencidos</option>
+                <option value="proximo_vencer">Próximos a Vencer</option>
             </select>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
-            <select name="servicio_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select x-model="servicioId" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">Todos los Servicios</option>
                 @foreach($catalogoServicios as $servicio)
-                    <option value="{{ $servicio->id }}" {{ $servicioId == $servicio->id ? 'selected' : '' }}>
-                        {{ $servicio->nombre }}
-                    </option>
+                    <option value="{{ $servicio->id }}">{{ $servicio->nombre }}</option>
                 @endforeach
             </select>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Cliente</label>
-            <input type="text" name="busqueda" value="{{ $busqueda ?? '' }}" placeholder="RUC o Razón Social"
+            <input type="text" x-model="busqueda" placeholder="RUC o Razón Social..."
                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
-        <div class="flex items-end">
-            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                Filtrar
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
 <!-- Lista de Servicios con Pagos Pendientes -->
@@ -88,10 +147,16 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($servicios as $servicio)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $servicio->razon_social }}</div>
-                            <div class="text-sm text-gray-500">RUC: {{ $servicio->ruc }}</div>
+                    <tr class="hover:bg-gray-50"
+                        data-servicio="true"
+                        data-search-text="{{ $servicio->razon_social }} {{ $servicio->ruc }} {{ $servicio->servicio_nombre }}"
+                        data-urgencia="{{ $servicio->urgencia }}"
+                        data-servicio-id="{{ $servicio->catalogo_servicio_id ?? '' }}">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900 max-w-xs truncate" title="{{ $servicio->razon_social }}">
+                                {{ $servicio->razon_social }}
+                            </div>
+                            <div class="text-sm text-gray-500 whitespace-nowrap">RUC: {{ $servicio->ruc }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="text-sm font-medium text-gray-900">{{ $servicio->servicio_nombre }}</div>
@@ -152,7 +217,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty="true" style="display: none;">
                         <td colspan="7" class="px-6 py-8 text-center">
                             <div class="flex flex-col items-center justify-center text-gray-500">
                                 <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,4 +241,6 @@
         </div>
     @endif
 </div>
+
+</div><!-- Cierre del div x-data -->
 @endsection
