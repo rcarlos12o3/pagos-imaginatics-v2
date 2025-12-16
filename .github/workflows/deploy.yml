@@ -123,18 +123,28 @@ jobs:
           chown -R www-data:www-data storage bootstrap/cache
 
           echo "♻️ Restarting services..."
+
+          # Instalar servicio systemd si no existe
+          if [ ! -f /etc/systemd/system/laravel-v2.service ]; then
+            echo "📝 Installing systemd service..."
+            cp deployment/laravel-v2.service /etc/systemd/system/
+            systemctl daemon-reload
+            systemctl enable laravel-v2
+          fi
+
+          # Reiniciar servicio Laravel
+          systemctl restart laravel-v2
+
           # Si usas PHP-FPM
-          sudo systemctl restart php8.4-fpm || echo "PHP-FPM restart skipped"
+          systemctl restart php8.4-fpm 2>/dev/null || echo "PHP-FPM restart skipped"
 
           # Si usas Nginx
-          sudo systemctl reload nginx || echo "Nginx reload skipped"
-
-          # Si usas supervisor para queues
-          sudo supervisorctl restart all || echo "Supervisor restart skipped"
+          systemctl reload nginx 2>/dev/null || echo "Nginx reload skipped"
 
           echo "✅ Laravel deployment completed!"
           echo ""
           echo "📍 App location: ${{ secrets.LARAVEL_PROJECT_PATH }}"
+          echo "🌐 App URL: http://161.97.100.196:8081"
         EOF
 
     - name: Verify Deployment

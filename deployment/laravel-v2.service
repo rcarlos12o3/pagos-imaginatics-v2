@@ -1,0 +1,14 @@
+[Unit]
+Description=Laravel V2 Application
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/pagos-imaginatics-v2
+ExecStart=/usr/bin/php artisan serve --host=0.0.0.0 --port=8081
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
