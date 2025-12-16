@@ -16,3 +16,5 @@ Sistema de gestión de clientes, servicios y pagos desarrollado en Laravel 12.
 
 ## Deployment
 El deployment es automático vía GitHub Actions al hacer push a main.
+
+Ver [DEPLOYMENT.md](DEPLOYMENT.md) para más detalles.
