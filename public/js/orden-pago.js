@@ -159,7 +159,8 @@ async function generarCanvasOrdenPago(servicio) {
 
 /**
  * Convertir canvas a base64
+ * Usa JPEG con calidad 0.7 para reducir tamaño (igual que sistema monolítico)
  */
 function canvasToBase64(canvas) {
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/jpeg', 0.7);
 }

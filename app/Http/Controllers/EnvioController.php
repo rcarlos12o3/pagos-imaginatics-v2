@@ -365,7 +365,7 @@ class EnvioController extends Controller
                 $fechaVencimiento = Carbon::parse($servicio->fecha_vencimiento, 'America/Lima');
                 $diasRestantes = $hoy->diffInDays($fechaVencimiento, false);
 
-                ColaEnvio::create([
+                $trabajo = ColaEnvio::create([
                     'sesion_id' => $sesion->id,
                     'cliente_id' => $servicio->cliente_id,
                     'servicio_contratado_id' => $servicio->id,
@@ -388,8 +388,8 @@ class EnvioController extends Controller
 
                 $trabajosAgregados++;
 
-                // Despachar Job con delay aleatorio (simula comportamiento humano)
-                \App\Jobs\ProcesarEnvioWhatsapp::dispatch($trabajo->id);
+                // Despachar Job a la cola específica de órdenes de pago
+                \App\Jobs\EnviarOrdenPago::dispatch($trabajo->id);
             }
 
             DB::commit();
@@ -399,7 +399,7 @@ class EnvioController extends Controller
                 'data' => [
                     'sesion_id' => $sesion->id,
                     'trabajos_agregados' => $trabajosAgregados,
-                    'mensaje' => "✅ {$trabajosAgregados} órdenes agregadas a la cola. Se enviarán con delays de 2-5 segundos entre cada una (comportamiento humano).",
+                    'mensaje' => "✅ {$trabajosAgregados} órdenes agregadas a la cola. Se enviarán con delays de 15-45 segundos entre cada una (comportamiento humano).",
                 ],
             ]);
 
