@@ -57,4 +57,20 @@ class Cliente extends Model
             ->whereNotNull('fecha_vencimiento')
             ->whereBetween('fecha_vencimiento', [now(), now()->addDays($dias)]);
     }
+
+    /**
+     * Accessor para limpiar razon_social de HTML entities y caracteres mal codificados
+     */
+    public function getRazonSocialAttribute($value): string
+    {
+        return clean_text($value);
+    }
+
+    /**
+     * Accessor para limpiar contacto_nombre
+     */
+    public function getContactoNombreAttribute($value): ?string
+    {
+        return clean_text($value);
+    }
 }

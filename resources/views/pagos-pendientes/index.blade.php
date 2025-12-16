@@ -143,7 +143,7 @@
                             </a>
                             <a href="{{ route('envios.index', ['cliente_id' => $servicio->cliente_id]) }}"
                                class="text-green-600 hover:text-green-900 mr-3">
-                                Enviar Orden
+                                Ver Órdenes
                             </a>
                             <a href="{{ route('pagos.create', ['cliente_id' => $servicio->cliente_id, 'servicio_id' => $servicio->contrato_id]) }}"
                                class="text-purple-600 hover:text-purple-900">

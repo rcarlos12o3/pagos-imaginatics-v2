@@ -256,15 +256,14 @@ class EnvioController extends Controller
             $debeEnviarse = false;
         }
 
-        // Verificar si ya se envió orden para este periodo
-        $yaEnviado = EnvioWhatsapp::where('cliente_id', $servicio->cliente_id)
-            ->where('servicio_contratado_id', $servicio->id)
+        // ⚠️ VALIDACIÓN CRÍTICA: Verificar si ya se envió orden HOY a este cliente
+        // (sin importar el servicio - máximo 1 orden por cliente por día)
+        $yaEnviadoHoy = EnvioWhatsapp::where('cliente_id', $servicio->cliente_id)
             ->where('tipo_envio', 'orden_pago')
-            ->where('estado', 'enviado')
-            ->where('fecha_envio', '>=', $servicio->fecha_ultima_factura ?? $fechaInicio)
+            ->whereDate('fecha_envio', $hoy->format('Y-m-d'))
             ->exists();
 
-        if ($yaEnviado) {
+        if ($yaEnviadoHoy) {
             $debeEnviarse = false;
             $estado = 'ya_enviado';
         }
@@ -353,6 +352,16 @@ class EnvioController extends Controller
                     continue; // Saltar si no se encuentra el servicio
                 }
 
+                // ⚠️ VALIDACIÓN CRÍTICA: Verificar que NO se haya enviado orden hoy a este cliente
+                $yaEnviadoHoy = EnvioWhatsapp::where('cliente_id', $servicio->cliente_id)
+                    ->where('tipo_envio', 'orden_pago')
+                    ->whereDate('fecha_envio', $hoy->format('Y-m-d'))
+                    ->exists();
+
+                if ($yaEnviadoHoy) {
+                    continue; // Saltar este cliente - ya recibió orden hoy
+                }
+
                 $fechaVencimiento = Carbon::parse($servicio->fecha_vencimiento, 'America/Lima');
                 $diasRestantes = $hoy->diffInDays($fechaVencimiento, false);
 
@@ -378,6 +387,9 @@ class EnvioController extends Controller
                 ]);
 
                 $trabajosAgregados++;
+
+                // Despachar Job con delay aleatorio (simula comportamiento humano)
+                \App\Jobs\ProcesarEnvioWhatsapp::dispatch($trabajo->id);
             }
 
             DB::commit();
@@ -387,7 +399,7 @@ class EnvioController extends Controller
                 'data' => [
                     'sesion_id' => $sesion->id,
                     'trabajos_agregados' => $trabajosAgregados,
-                    'mensaje' => 'Órdenes agregadas a la cola exitosamente',
+                    'mensaje' => "✅ {$trabajosAgregados} órdenes agregadas a la cola. Se enviarán con delays de 2-5 segundos entre cada una (comportamiento humano).",
                 ],
             ]);
 

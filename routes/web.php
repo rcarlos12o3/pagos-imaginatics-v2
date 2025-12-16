@@ -34,10 +34,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/historial/stats', [EnvioController::class, 'stats'])->name('historial.stats');
     Route::get('/api/historial/cliente', [EnvioController::class, 'historialCliente'])->name('historial.cliente');
 
-    // Módulo de Envíos (Análisis Inteligente)
-    Route::get('/envios', [EnvioController::class, 'envios'])->name('envios.index');
-    Route::get('/api/envios/analizar-pendientes', [EnvioController::class, 'analizarEnviosPendientes'])->name('envios.analizar');
-    Route::post('/api/envios/enviar-ordenes', [EnvioController::class, 'enviarOrdenes'])->name('envios.enviar');
+    // Módulo de Órdenes de Pago (Análisis Inteligente)
+    Route::get('/op', [EnvioController::class, 'envios'])->name('envios.index');
+    Route::get('/api/op/analizar-pendientes', [EnvioController::class, 'analizarEnviosPendientes'])->name('envios.analizar');
+    Route::post('/api/op/enviar-ordenes', [EnvioController::class, 'enviarOrdenes'])->name('envios.enviar');
 
     // Consulta RUC
     Route::get('/api/ruc/consultar', [RucController::class, 'consultar'])->name('ruc.consultar');

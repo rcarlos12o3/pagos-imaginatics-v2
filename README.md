@@ -9,6 +9,7 @@ Sistema de gestión de clientes, servicios y pagos desarrollado en Laravel 12.
 - ✅ Consulta RUC (Factiliza API)
 - ✅ Pagos Pendientes
 - ✅ Registro de Pagos Multi-servicio
+- ✅ **Envíos WhatsApp** - Sistema de Análisis Inteligente de órdenes de pago
 
 ## URLs
 - **Producción**: http://161.97.100.196:8081

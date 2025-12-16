@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Envíos de Órdenes')
+@section('title', 'Órdenes de Pago')
 
 @section('content')
 <div x-data="{
@@ -16,7 +16,7 @@
     async cargarServiciosPendientes() {
         this.cargando = true;
         try {
-            const response = await fetch('/api/envios/analizar-pendientes');
+            const response = await fetch('/api/op/analizar-pendientes');
             const data = await response.json();
 
             if (data.success) {
@@ -90,7 +90,7 @@
             this.progresoTexto = 'Enviando a la cola de procesamiento...';
             this.progreso = 80;
 
-            const response = await fetch('/api/envios/enviar-ordenes', {
+            const response = await fetch('/api/op/enviar-ordenes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'factiliza' => [
+        'token' => env('FACTILIZA_API_TOKEN'),
+        'url' => env('FACTILIZA_API_URL', 'https://api.factiliza.com'),
+    ],
+
+    'whatsapp' => [
+        'token' => env('WHATSAPP_API_TOKEN'),
+        'url' => env('WHATSAPP_API_URL'),
+    ],
+
 ];

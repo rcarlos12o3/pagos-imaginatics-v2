@@ -121,6 +121,10 @@ SESSION_LIFETIME=120
 
 # API Factiliza (para consulta RUC)
 FACTILIZA_API_TOKEN=tu_token_factiliza
+
+# API WhatsApp (para envío de órdenes)
+WHATSAPP_API_URL=https://api.whatsapp.com/send
+WHATSAPP_API_TOKEN=tu_token_whatsapp
 ```
 
 **Generar APP_KEY:**
