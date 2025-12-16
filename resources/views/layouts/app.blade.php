@@ -7,7 +7,7 @@
     <title>@yield('title', 'Gestión de Clientes') - Imaginatics</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50 antialiased" x-data="{ sidebarOpen: true }">
+<body class="bg-gray-50 antialiased" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
