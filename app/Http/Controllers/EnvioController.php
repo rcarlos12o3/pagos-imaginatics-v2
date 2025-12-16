@@ -342,6 +342,7 @@ class EnvioController extends Controller
             ]);
 
             $trabajosAgregados = 0;
+            $delaySegundos = 0; // Delay acumulativo
 
             // Agregar trabajos a la cola
             foreach ($validated['servicios'] as $servicioData) {
@@ -388,8 +389,11 @@ class EnvioController extends Controller
 
                 $trabajosAgregados++;
 
-                // Despachar Job a la cola específica de órdenes de pago
-                \App\Jobs\EnviarOrdenPago::dispatch($trabajo->id);
+                // Despachar Job con delay acumulativo aleatorio (30-90 segundos entre cada uno)
+                // Simula comportamiento humano impredecible
+                $delaySegundos += rand(30, 90);
+                \App\Jobs\EnviarOrdenPago::dispatch($trabajo->id)
+                    ->delay(now()->addSeconds($delaySegundos));
             }
 
             DB::commit();

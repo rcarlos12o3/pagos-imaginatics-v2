@@ -30,9 +30,7 @@ class EnviarOrdenPago implements ShouldQueue
         // Asignar a cola específica de órdenes de pago
         $this->onQueue('ordenes-pago');
 
-        // ⚠️ DELAY ALEATORIO: Simula comportamiento humano (15-45 segundos entre envíos)
-        $delaySegundos = rand(15, 45);
-        $this->delay(now()->addSeconds($delaySegundos));
+        // El delay se aplica en el dispatch, no aquí
     }
 
     /**
