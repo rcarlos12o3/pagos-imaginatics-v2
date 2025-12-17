@@ -13,7 +13,8 @@ class ClienteController extends Controller
     {
         $query = Cliente::query();
 
-        if ($request->has('search')) {
+        // Filtro de búsqueda
+        if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
                 $q->where('razon_social', 'like', "%{$search}%")
@@ -22,11 +23,12 @@ class ClienteController extends Controller
             });
         }
 
-        if ($request->has('activo')) {
+        // Filtro de estado activo/inactivo
+        if ($request->filled('activo')) {
             $query->where('activo', $request->input('activo'));
         }
 
-        $clientes = $query->orderBy('razon_social')->paginate(15);
+        $clientes = $query->orderBy('razon_social')->paginate(15)->withQueryString();
 
         return view('clientes.index', compact('clientes'));
     }

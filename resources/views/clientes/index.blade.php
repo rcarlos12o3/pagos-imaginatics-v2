@@ -13,19 +13,26 @@
 @endsection
 
 @section('content')
-<div class="bg-white shadow-sm rounded-lg overflow-hidden">
+<div class="bg-white shadow-sm rounded-lg overflow-hidden" x-data="{ debounceTimer: null }">
     <!-- Tabs/Filters -->
     <div class="border-b border-gray-200">
         <div class="px-6 py-4">
-            <form method="GET" action="{{ route('clientes.index') }}" class="flex gap-4">
+            <form method="GET" action="{{ route('clientes.index') }}" id="clientesFilterForm" class="flex gap-4">
             <input type="text"
                    name="search"
                    value="{{ request('search') }}"
                    placeholder="Buscar por razón social, RUC o WhatsApp..."
-                   class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                   class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                   @input="
+                       clearTimeout(debounceTimer);
+                       debounceTimer = setTimeout(() => {
+                           document.getElementById('clientesFilterForm').submit();
+                       }, 500);
+                   ">
 
             <select name="activo"
-                    class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    onchange="this.form.submit()">
                 <option value="">Todos</option>
                 <option value="1" {{ request('activo') == '1' ? 'selected' : '' }}>Activos</option>
                 <option value="0" {{ request('activo') == '0' ? 'selected' : '' }}>Inactivos</option>
