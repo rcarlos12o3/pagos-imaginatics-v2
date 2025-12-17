@@ -325,6 +325,171 @@ class ServicioContratadoController extends Controller
     }
 
     /**
+     * Migrar servicio a otro plan
+     */
+    public function migrarPlan(Request $request, ServicioContratado $servicio): RedirectResponse
+    {
+        if (!in_array($servicio->estado, ['activo', 'vencido'])) {
+            return back()->with('error', 'Solo se pueden migrar servicios activos o vencidos');
+        }
+
+        $validated = $request->validate([
+            'nuevo_servicio_id' => 'required|exists:catalogo_servicios,id',
+            'precio' => 'required|numeric|min:0',
+            'moneda' => 'required|in:PEN,USD',
+            'fecha_vencimiento' => 'required|date', // Permitir cualquier fecha (incluso pasadas)
+            'motivo_migracion' => 'nullable|string|max:500',
+            'generar_orden_inmediata' => 'nullable|boolean'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Obtener información del nuevo servicio
+            $nuevoServicioCatalogo = CatalogoServicio::findOrFail($validated['nuevo_servicio_id']);
+
+            // Extraer periodicidad del nombre del nuevo servicio
+            $periodoNuevo = $this->extraerPeriodicidad($nuevoServicioCatalogo->nombre);
+
+            // 1. Suspender servicio actual
+            $motivo = 'Migrado a: ' . $nuevoServicioCatalogo->nombre;
+            if (!empty($validated['motivo_migracion'])) {
+                $motivo .= ' - ' . $validated['motivo_migracion'];
+            }
+            $motivo .= ' (' . now()->format('d/m/Y') . ')';
+
+            $servicio->update([
+                'estado' => 'suspendido',
+                'motivo_suspension' => $motivo
+            ]);
+
+            // 2. Crear nuevo servicio
+            $configuracion = [
+                'migrado_desde' => [
+                    'servicio_contratado_id' => $servicio->id,
+                    'servicio_nombre' => $servicio->catalogoServicio->nombre,
+                    'fecha_migracion' => now()->format('Y-m-d H:i:s'),
+                    'usuario' => auth()->user()->nombre ?? 'Sistema',
+                    'motivo' => $validated['motivo_migracion'] ?? 'Cambio de plan'
+                ]
+            ];
+
+            // Si se marcó generar orden inmediata, agregar flag
+            if ($request->boolean('generar_orden_inmediata')) {
+                $configuracion['envio_inmediato'] = true;
+                $configuracion['fecha_solicitud_envio'] = now()->format('Y-m-d H:i:s');
+            }
+
+            $nuevoServicio = ServicioContratado::create([
+                'cliente_id' => $servicio->cliente_id,
+                'servicio_id' => $validated['nuevo_servicio_id'],
+                'precio' => $validated['precio'],
+                'moneda' => $validated['moneda'],
+                'periodo_facturacion' => $periodoNuevo,
+                'fecha_inicio' => now()->format('Y-m-d'),
+                'fecha_vencimiento' => $validated['fecha_vencimiento'],
+                'fecha_proximo_pago' => $validated['fecha_vencimiento'],
+                'estado' => 'activo',
+                'auto_renovacion' => $servicio->auto_renovacion,
+                'notas' => 'Migrado desde: ' . $servicio->catalogoServicio->nombre . ' (ID: ' . $servicio->id . ')',
+                'usuario_creacion' => auth()->user()->usuario ?? 'Sistema',
+                'configuracion' => $configuracion
+            ]);
+
+            DB::commit();
+
+            Log::info('Servicio migrado', [
+                'servicio_anterior_id' => $servicio->id,
+                'servicio_nuevo_id' => $nuevoServicio->id,
+                'cliente_id' => $servicio->cliente_id,
+            ]);
+
+            return redirect()
+                ->route('servicios.show', $nuevoServicio)
+                ->with('success', 'Servicio migrado exitosamente al nuevo plan');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al migrar servicio', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Error al migrar servicio: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * API: Obtener servicios compatibles para migración
+     */
+    public function serviciosCompatibles(Request $request): JsonResponse
+    {
+        $servicioActualId = $request->get('servicio_id');
+
+        if (!$servicioActualId) {
+            return response()->json([
+                'success' => false,
+                'error' => 'ID de servicio requerido'
+            ], 400);
+        }
+
+        try {
+            $servicioActual = ServicioContratado::with('catalogoServicio')->findOrFail($servicioActualId);
+            $categoriaActual = $servicioActual->catalogoServicio->categoria;
+
+            // Obtener servicios de la misma categoría, excluyendo el actual
+            $serviciosCompatibles = CatalogoServicio::activo()
+                ->where('categoria', $categoriaActual)
+                ->where('id', '!=', $servicioActual->servicio_id)
+                ->orderBy('orden_visualizacion')
+                ->orderBy('nombre')
+                ->get()
+                ->map(function ($servicio) {
+                    return [
+                        'id' => $servicio->id,
+                        'nombre' => $servicio->nombre,
+                        'descripcion' => $servicio->descripcion,
+                        'precio_base' => $servicio->precio_base,
+                        'moneda' => $servicio->moneda,
+                        'categoria' => $servicio->categoria
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $serviciosCompatibles,
+                'servicio_actual' => [
+                    'nombre' => $servicioActual->catalogoServicio->nombre,
+                    'categoria' => $categoriaActual
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Extraer periodicidad del nombre del servicio
+     */
+    private function extraerPeriodicidad(string $nombreServicio): string
+    {
+        $nombre = strtolower($nombreServicio);
+
+        if (str_contains($nombre, 'mensual')) {
+            return 'mensual';
+        } elseif (str_contains($nombre, 'trimestral')) {
+            return 'trimestral';
+        } elseif (str_contains($nombre, 'semestral')) {
+            return 'semestral';
+        } elseif (str_contains($nombre, 'anual')) {
+            return 'anual';
+        }
+
+        // Por defecto mensual
+        return 'mensual';
+    }
+
+    /**
      * Obtener estadísticas
      */
     private function getEstadisticas(): array

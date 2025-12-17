@@ -242,7 +242,13 @@ class EnvioController extends Controller
         $estado = '';
         $debeEnviarse = false;
 
-        if ($diasHastaVencer < 0) {
+        // ⚠️ PRIORIDAD: Verificar si tiene flag de envío inmediato (migración de plan)
+        $configuracion = $servicio->configuracion ?? [];
+        if (isset($configuracion['envio_inmediato']) && $configuracion['envio_inmediato'] === true) {
+            // Servicio marcado para envío inmediato (recién migrado)
+            $estado = 'envio_inmediato';
+            $debeEnviarse = true;
+        } elseif ($diasHastaVencer < 0) {
             // Ya venció - debe enviarse
             $estado = 'fuera_del_plazo';
             $debeEnviarse = true;
@@ -388,6 +394,15 @@ class EnvioController extends Controller
                 ]);
 
                 $trabajosAgregados++;
+
+                // Limpiar flag de envío inmediato si existe
+                $configuracion = $servicio->configuracion ?? [];
+                if (isset($configuracion['envio_inmediato']) && $configuracion['envio_inmediato'] === true) {
+                    unset($configuracion['envio_inmediato']);
+                    unset($configuracion['fecha_solicitud_envio']);
+                    $servicio->configuracion = $configuracion;
+                    $servicio->save();
+                }
 
                 // Despachar Job con delay acumulativo aleatorio (30-90 segundos entre cada uno)
                 // Simula comportamiento humano impredecible

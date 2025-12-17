@@ -48,9 +48,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('servicios', ServicioContratadoController::class);
     Route::post('/servicios/{servicio}/suspender', [ServicioContratadoController::class, 'suspender'])->name('servicios.suspender');
     Route::post('/servicios/{servicio}/reactivar', [ServicioContratadoController::class, 'reactivar'])->name('servicios.reactivar');
+    Route::post('/servicios/{servicio}/migrar-plan', [ServicioContratadoController::class, 'migrarPlan'])->name('servicios.migrar-plan');
 
     // API Servicios
     Route::get('/api/servicios/cliente', [ServicioContratadoController::class, 'serviciosCliente'])->name('servicios.cliente');
+    Route::get('/api/servicios/compatibles', [ServicioContratadoController::class, 'serviciosCompatibles'])->name('servicios.compatibles');
 
     // Pagos Pendientes
     Route::get('/pagos-pendientes', [PagosPendientesController::class, 'index'])->name('pagos-pendientes.index');

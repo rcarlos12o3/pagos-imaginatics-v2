@@ -4,6 +4,16 @@
 
 @section('actions')
     <div class="flex gap-2">
+        @if(in_array($servicio->estado, ['activo', 'vencido']))
+            <button type="button" onclick="abrirModalMigrar()"
+                    class="px-3 py-2 text-white text-sm font-medium rounded-lg"
+                    style="background-color: #6366f1;"
+                    onmouseover="this.style.backgroundColor='#4f46e5'"
+                    onmouseout="this.style.backgroundColor='#6366f1'">
+                🔄 Migrar Plan
+            </button>
+        @endif
+
         @if($servicio->estado === 'activo')
             <button type="button" onclick="document.getElementById('suspender-form').classList.toggle('hidden')"
                     class="px-3 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700">
@@ -215,4 +225,215 @@
         </form>
     </div>
 </div>
+
+<!-- Modal Migrar Plan -->
+<div id="migrar-form" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto">
+    <div class="flex min-h-full items-center justify-center p-4">
+    <div class="bg-white rounded-lg w-full max-w-2xl my-8 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Migrar a Otro Plan</h3>
+            <button type="button" onclick="cerrarModalMigrar()" class="text-gray-400 hover:text-gray-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+            <!-- Información del servicio actual -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h4 class="text-sm font-medium text-blue-900 mb-2">Servicio Actual</h4>
+                <p class="text-sm text-blue-800">{{ $servicio->catalogoServicio->nombre }}</p>
+                <p class="text-xs text-blue-600 mt-1">{{ $servicio->moneda }} {{ number_format($servicio->precio, 2) }} - {{ ucfirst($servicio->periodo_facturacion) }}</p>
+            </div>
+
+        <form action="{{ route('servicios.migrar-plan', $servicio) }}" method="POST" id="form-migrar">
+            @csrf
+
+            <!-- Selector de nuevo servicio -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nuevo Plan *</label>
+                <div id="loading-servicios" class="text-sm text-gray-500">Cargando servicios disponibles...</div>
+                <select name="nuevo_servicio_id" id="nuevo_servicio_id" required
+                        class="hidden w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        onchange="actualizarPrecioSugerido()">
+                    <option value="">Seleccione un plan</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">Solo se muestran planes de la misma categoría</p>
+            </div>
+
+            <!-- Precio -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Precio *</label>
+                <div class="flex gap-2">
+                    <select name="moneda" required class="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="PEN" {{ $servicio->moneda === 'PEN' ? 'selected' : '' }}>PEN</option>
+                        <option value="USD" {{ $servicio->moneda === 'USD' ? 'selected' : '' }}>USD</option>
+                    </select>
+                    <input type="number" name="precio" id="precio" step="0.01" min="0" required
+                           class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="0.00">
+                </div>
+            </div>
+
+            <!-- Fecha de vencimiento -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Vencimiento del Nuevo Servicio *</label>
+                <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" required
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <p class="mt-1 text-xs text-gray-500">
+                    <strong>Importante:</strong> Esta es la fecha hasta la cual el cliente estará cubierto después de pagar.
+                    El sistema enviará la orden de pago automáticamente según la periodicidad del nuevo plan.
+                </p>
+                <p class="mt-1 text-xs text-blue-600" id="fecha-sugerencia"></p>
+            </div>
+
+            <!-- Generar orden de pago ahora -->
+            <div class="mb-4">
+                <label class="flex items-start">
+                    <input type="checkbox" name="generar_orden_inmediata" id="generar_orden_inmediata" value="1" checked
+                           class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <span class="ml-2">
+                        <span class="text-sm font-medium text-gray-700">Generar orden de pago inmediatamente</span>
+                        <span class="block text-xs text-gray-500 mt-1">
+                            Si marcas esta opción, el servicio aparecerá automáticamente en "Órdenes de Pago" para que puedas enviar la orden al cliente de inmediato.
+                            <strong>Recomendado cuando el cliente debe pagar ahora.</strong>
+                        </span>
+                    </span>
+                </label>
+            </div>
+
+            <!-- Motivo (opcional) -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Motivo de Migración (opcional)</label>
+                <textarea name="motivo_migracion" rows="2"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Ej: Cliente solicitó cambio a plan anual para obtener descuento"></textarea>
+            </div>
+
+            <!-- Advertencia -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <h4 class="text-sm font-medium text-yellow-900 mb-1">⚠️ Importante</h4>
+                <ul class="text-xs text-yellow-800 space-y-1 list-disc list-inside">
+                    <li>El servicio actual será suspendido</li>
+                    <li>Se creará un nuevo contrato con el plan seleccionado</li>
+                    <li>Se mantendrá trazabilidad completa de la migración</li>
+                </ul>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="cerrarModalMigrar()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-white rounded-md text-sm font-medium"
+                        style="background-color: #6366f1;"
+                        onmouseover="this.style.backgroundColor='#4f46e5'"
+                        onmouseout="this.style.backgroundColor='#6366f1'">
+                    Migrar Plan
+                </button>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+
+<script>
+let serviciosCompatibles = [];
+
+function abrirModalMigrar() {
+    document.getElementById('migrar-form').classList.remove('hidden');
+    cargarServiciosCompatibles();
+}
+
+function cerrarModalMigrar() {
+    document.getElementById('migrar-form').classList.add('hidden');
+}
+
+async function cargarServiciosCompatibles() {
+    const loadingEl = document.getElementById('loading-servicios');
+    const selectEl = document.getElementById('nuevo_servicio_id');
+
+    try {
+        const response = await fetch(`{{ route('servicios.compatibles') }}?servicio_id={{ $servicio->id }}`);
+        const data = await response.json();
+
+        if (data.success) {
+            serviciosCompatibles = data.data;
+
+            // Limpiar y poblar el select
+            selectEl.innerHTML = '<option value="">Seleccione un plan</option>';
+
+            data.data.forEach(servicio => {
+                const option = document.createElement('option');
+                option.value = servicio.id;
+                option.textContent = servicio.nombre;
+                option.dataset.precio = servicio.precio_base;
+                option.dataset.moneda = servicio.moneda;
+                selectEl.appendChild(option);
+            });
+
+            // Mostrar select y ocultar loading
+            loadingEl.classList.add('hidden');
+            selectEl.classList.remove('hidden');
+        } else {
+            loadingEl.textContent = 'Error al cargar servicios: ' + data.error;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        loadingEl.textContent = 'Error al cargar servicios disponibles';
+    }
+}
+
+function actualizarPrecioSugerido() {
+    const selectEl = document.getElementById('nuevo_servicio_id');
+    const precioInput = document.getElementById('precio');
+    const fechaInput = document.getElementById('fecha_vencimiento');
+    const sugerenciaEl = document.getElementById('fecha-sugerencia');
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+
+    if (selectedOption && selectedOption.value) {
+        // Actualizar precio
+        const precioBase = selectedOption.dataset.precio;
+        if (precioBase) {
+            precioInput.value = parseFloat(precioBase).toFixed(2);
+        }
+
+        // Calcular fecha sugerida según periodicidad
+        const nombreServicio = selectedOption.textContent.toLowerCase();
+        let meses = 1;
+        let periodoNombre = 'mensual';
+
+        if (nombreServicio.includes('anual')) {
+            meses = 12;
+            periodoNombre = 'anual';
+        } else if (nombreServicio.includes('semestral')) {
+            meses = 6;
+            periodoNombre = 'semestral';
+        } else if (nombreServicio.includes('trimestral')) {
+            meses = 3;
+            periodoNombre = 'trimestral';
+        }
+
+        // Usar fecha de vencimiento ACTUAL del servicio (no hoy)
+        const fechaVencimientoActual = new Date('{{ $servicio->fecha_vencimiento->format('Y-m-d') }}');
+
+        // MANTENER la misma fecha de vencimiento
+        // El cliente debe pagar primero, luego el sistema renovará
+        const fechaFormateada = fechaVencimientoActual.toISOString().split('T')[0];
+        fechaInput.value = fechaFormateada;
+
+        // Mostrar sugerencia
+        const fechaLegible = fechaVencimientoActual.toLocaleDateString('es-PE', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        sugerenciaEl.textContent = `✓ Manteniendo fecha actual: ${fechaLegible}. El cliente debe pagar este periodo por adelantado (${periodoNombre}). Después de pagar, el sistema renovará por ${meses} ${meses === 1 ? 'mes' : 'meses'}.`;
+    }
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('migrar-form')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalMigrar();
+    }
+});
+</script>
 @endsection
