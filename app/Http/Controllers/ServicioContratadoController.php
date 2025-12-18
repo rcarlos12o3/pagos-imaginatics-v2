@@ -23,6 +23,15 @@ class ServicioContratadoController extends Controller
         $query = ServicioContratado::with(['cliente', 'catalogoServicio'])
             ->orderBy('fecha_vencimiento', 'asc');
 
+        // Filtro de búsqueda por RUC o Razón Social
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+            $query->whereHas('cliente', function ($q) use ($buscar) {
+                $q->where('ruc', 'LIKE', "%{$buscar}%")
+                  ->orWhere('razon_social', 'LIKE', "%{$buscar}%");
+            });
+        }
+
         // Filtros
         if ($request->filled('cliente_id')) {
             $query->where('cliente_id', $request->cliente_id);
@@ -36,7 +45,7 @@ class ServicioContratadoController extends Controller
             $query->where('periodo_facturacion', $request->periodo);
         }
 
-        $servicios = $query->paginate(20);
+        $servicios = $query->paginate(20)->withQueryString();
 
         // Estadísticas
         $estadisticas = $this->getEstadisticas();
