@@ -57,7 +57,12 @@ Route::middleware(['auth'])->group(function () {
     // Pagos Pendientes
     Route::get('/pagos-pendientes', [PagosPendientesController::class, 'index'])->name('pagos-pendientes.index');
 
-    // Registro de Pagos
+    // Gestión de Pagos
+    Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
     Route::get('/pagos/create', [PagoController::class, 'create'])->name('pagos.create');
     Route::post('/pagos', [PagoController::class, 'store'])->name('pagos.store');
+    Route::get('/pagos/{pago}', [PagoController::class, 'show'])->name('pagos.show');
+    Route::get('/pagos/{pago}/edit', [PagoController::class, 'edit'])->name('pagos.edit');
+    Route::put('/pagos/{pago}', [PagoController::class, 'update'])->name('pagos.update');
+    Route::delete('/pagos/{pago}', [PagoController::class, 'destroy'])->name('pagos.destroy');
 });

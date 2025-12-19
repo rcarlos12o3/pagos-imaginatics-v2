@@ -7,12 +7,83 @@ use App\Models\ServicioContratado;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class PagoController extends Controller
 {
+    /**
+     * Mostrar listado de pagos con estadísticas
+     */
+    public function index(Request $request): View
+    {
+        // Obtener mes y año actuales o de los filtros
+        $mes = $request->input('mes', now()->month);
+        $anio = $request->input('anio', now()->year);
+
+        // Construir query base
+        $query = HistorialPago::with('cliente')
+            ->join('clientes', 'historial_pagos.cliente_id', '=', 'clientes.id');
+
+        // Búsqueda instantánea
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('clientes.ruc', 'like', "%{$search}%")
+                  ->orWhere('clientes.razon_social', 'like', "%{$search}%")
+                  ->orWhere('clientes.nombre_comercial', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por mes y año
+        if ($mes && $anio) {
+            $query->whereYear('historial_pagos.fecha_pago', $anio)
+                  ->whereMonth('historial_pagos.fecha_pago', $mes);
+        }
+
+        // Filtro por método
+        if ($request->filled('metodo')) {
+            $query->where('historial_pagos.metodo_pago', $request->input('metodo'));
+        }
+
+        // Filtro por banco
+        if ($request->filled('banco')) {
+            $query->where('historial_pagos.banco', $request->input('banco'));
+        }
+
+        // Seleccionar columnas específicas para evitar conflictos
+        $query->select('historial_pagos.*');
+
+        // Obtener pagos paginados
+        $pagos = $query->orderBy('historial_pagos.fecha_pago', 'desc')
+                       ->orderBy('historial_pagos.id', 'desc')
+                       ->paginate(15)
+                       ->withQueryString();
+
+        // Calcular estadísticas del mes actual
+        $estadisticasMes = HistorialPago::whereYear('fecha_pago', now()->year)
+            ->whereMonth('fecha_pago', now()->month)
+            ->selectRaw('
+                COALESCE(SUM(monto_pagado), 0) as total_recaudado,
+                COUNT(*) as cantidad_pagos,
+                COALESCE(AVG(monto_pagado), 0) as pago_promedio,
+                COALESCE(MAX(monto_pagado), 0) as mayor_pago
+            ')
+            ->first();
+
+        // Obtener lista de bancos únicos para el filtro
+        $bancos = HistorialPago::whereNotNull('banco')
+            ->distinct()
+            ->pluck('banco')
+            ->filter()
+            ->sort()
+            ->values();
+
+        return view('pagos.index', compact('pagos', 'estadisticasMes', 'bancos', 'mes', 'anio'));
+    }
+
     /**
      * Mostrar formulario para registrar pago
      */
@@ -113,6 +184,73 @@ class PagoController extends Controller
             return back()
                 ->withInput()
                 ->withErrors(['error' => 'Error al registrar el pago: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mostrar detalles de un pago (JSON para modal)
+     */
+    public function show(HistorialPago $pago)
+    {
+        $pago->load('cliente');
+
+        // Obtener servicios asociados
+        $servicios = [];
+        if ($pago->servicios_pagados) {
+            $servicios = ServicioContratado::whereIn('id', $pago->servicios_pagados)
+                ->with('catalogoServicio')
+                ->get();
+        }
+
+        return response()->json([
+            'success' => true,
+            'pago' => $pago,
+            'servicios' => $servicios
+        ]);
+    }
+
+    /**
+     * Mostrar formulario de edición
+     */
+    public function edit(HistorialPago $pago): View
+    {
+        $pago->load('cliente');
+
+        return view('pagos.edit', compact('pago'));
+    }
+
+    /**
+     * Actualizar pago
+     */
+    public function update(Request $request, HistorialPago $pago): RedirectResponse
+    {
+        $validated = $request->validate([
+            'monto_pagado' => 'required|numeric|min:0',
+            'fecha_pago' => 'required|date',
+            'metodo_pago' => 'required|in:transferencia,deposito,yape,plin,efectivo,otro',
+            'numero_operacion' => 'nullable|string|max:50',
+            'banco' => 'nullable|string|max:100',
+            'observaciones' => 'nullable|string'
+        ]);
+
+        $pago->update($validated);
+
+        return redirect()->route('pagos.index')
+            ->with('success', 'Pago actualizado exitosamente');
+    }
+
+    /**
+     * Eliminar pago
+     */
+    public function destroy(HistorialPago $pago): RedirectResponse
+    {
+        try {
+            $pago->delete();
+
+            return redirect()->route('pagos.index')
+                ->with('success', 'Pago eliminado exitosamente');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al eliminar el pago: ' . $e->getMessage()]);
         }
     }
 
