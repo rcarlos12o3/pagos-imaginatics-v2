@@ -36,7 +36,7 @@ class PagoController extends Controller
             } else {
                 // Obtener todos los servicios activos del cliente
                 $serviciosSeleccionados = ServicioContratado::where('cliente_id', $clienteId)
-                    ->whereIn('estado', ['activo', 'vencido'])
+                    ->where('estado', 'activo')
                     ->with('catalogoServicio')
                     ->get();
             }
@@ -94,11 +94,6 @@ class PagoController extends Controller
                                 $servicio->periodo_facturacion
                             );
                             $servicio->fecha_vencimiento = $nuevaFechaVencimiento;
-                        }
-
-                        // Si estaba vencido, reactivarlo
-                        if ($servicio->estado === 'vencido') {
-                            $servicio->estado = 'activo';
                         }
 
                         $servicio->save();

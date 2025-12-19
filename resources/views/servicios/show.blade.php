@@ -4,7 +4,7 @@
 
 @section('actions')
     <div class="flex gap-2">
-        @if(in_array($servicio->estado, ['activo', 'vencido']))
+        @if($servicio->estado === 'activo')
             <button type="button" onclick="abrirModalMigrar()"
                     class="px-3 py-2 text-white text-sm font-medium rounded-lg"
                     style="background-color: #6366f1;"
@@ -21,7 +21,7 @@
             </button>
         @endif
 
-        @if(in_array($servicio->estado, ['suspendido', 'vencido']))
+        @if($servicio->estado === 'suspendido')
             <button type="button" onclick="document.getElementById('reactivar-form').classList.toggle('hidden')"
                     class="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
                 Reactivar
@@ -50,7 +50,6 @@
                 $estadoClasses = [
                     'activo' => 'bg-green-100 text-green-800',
                     'suspendido' => 'bg-yellow-100 text-yellow-800',
-                    'vencido' => 'bg-red-100 text-red-800',
                     'cancelado' => 'bg-gray-100 text-gray-800',
                 ];
                 $class = $estadoClasses[$servicio->estado] ?? 'bg-gray-100 text-gray-800';

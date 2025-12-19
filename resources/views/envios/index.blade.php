@@ -5,6 +5,7 @@
 @section('content')
 <div x-data="{
     servicios: [],
+    serviciosFiltrados: [],
     cargando: true,
     totalServicios: 0,
     debenEnviarse: 0,
@@ -12,6 +13,7 @@
     enviando: false,
     progreso: 0,
     progresoTexto: '',
+    busqueda: '',
 
     async cargarServiciosPendientes() {
         this.cargando = true;
@@ -21,6 +23,7 @@
 
             if (data.success) {
                 this.servicios = data.data.servicios;
+                this.serviciosFiltrados = data.data.servicios;
                 this.totalServicios = data.data.total;
                 this.debenEnviarse = data.data.deben_enviarse;
             }
@@ -29,6 +32,19 @@
         } finally {
             this.cargando = false;
         }
+    },
+
+    filtrarServicios() {
+        if (!this.busqueda.trim()) {
+            this.serviciosFiltrados = this.servicios;
+            return;
+        }
+
+        const termino = this.busqueda.toLowerCase().trim();
+        this.serviciosFiltrados = this.servicios.filter(servicio => {
+            return servicio.ruc.includes(termino) ||
+                   servicio.empresa.toLowerCase().includes(termino);
+        });
     },
 
     toggleSeleccion(contratoId) {
@@ -210,6 +226,25 @@
             </button>
         </div>
 
+        <!-- Buscador -->
+        <div class="mb-4 border-t pt-4" x-show="!cargando && totalServicios > 0">
+            <div class="flex items-center gap-3">
+                <div class="flex-1">
+                    <input type="text"
+                           x-model="busqueda"
+                           @input="filtrarServicios()"
+                           placeholder="Buscar por RUC o Razón Social..."
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Filtra en tiempo real entre los <span x-text="totalServicios"></span> servicios cargados</p>
+                </div>
+                <button @click="busqueda = ''; filtrarServicios();"
+                        x-show="busqueda.length > 0"
+                        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                    Limpiar
+                </button>
+            </div>
+        </div>
+
         <!-- Botones de acción -->
         <div class="flex items-center gap-3 border-t pt-4" x-show="!cargando && debenEnviarse > 0">
             <button @click="seleccionarTodos()"
@@ -288,7 +323,7 @@
                     </tr>
 
                     <!-- Data Rows -->
-                    <template x-for="servicio in servicios" :key="servicio.contrato_id">
+                    <template x-for="servicio in serviciosFiltrados" :key="servicio.contrato_id">
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <input type="checkbox"

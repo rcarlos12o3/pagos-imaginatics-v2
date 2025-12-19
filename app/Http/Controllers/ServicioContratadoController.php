@@ -264,8 +264,8 @@ class ServicioContratadoController extends Controller
      */
     public function reactivar(Request $request, ServicioContratado $servicio): RedirectResponse
     {
-        if (!in_array($servicio->estado, ['suspendido', 'vencido'])) {
-            return back()->with('error', 'Solo se pueden reactivar servicios suspendidos o vencidos');
+        if ($servicio->estado !== 'suspendido') {
+            return back()->with('error', 'Solo se pueden reactivar servicios suspendidos');
         }
 
         $validated = $request->validate([
@@ -338,8 +338,8 @@ class ServicioContratadoController extends Controller
      */
     public function migrarPlan(Request $request, ServicioContratado $servicio): RedirectResponse
     {
-        if (!in_array($servicio->estado, ['activo', 'vencido'])) {
-            return back()->with('error', 'Solo se pueden migrar servicios activos o vencidos');
+        if ($servicio->estado !== 'activo') {
+            return back()->with('error', 'Solo se pueden migrar servicios activos');
         }
 
         $validated = $request->validate([
@@ -508,7 +508,6 @@ class ServicioContratadoController extends Controller
                 COUNT(*) as total_contratos,
                 SUM(CASE WHEN estado = "activo" THEN 1 ELSE 0 END) as activos,
                 SUM(CASE WHEN estado = "suspendido" THEN 1 ELSE 0 END) as suspendidos,
-                SUM(CASE WHEN estado = "vencido" THEN 1 ELSE 0 END) as vencidos,
                 SUM(CASE WHEN estado = "cancelado" THEN 1 ELSE 0 END) as cancelados
             ')
             ->first();

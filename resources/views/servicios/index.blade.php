@@ -14,7 +14,7 @@
 
 @section('content')
 <!-- Estadísticas -->
-<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
     <div class="bg-white rounded-lg shadow-sm p-3">
         <div class="text-gray-500 text-xs font-medium">Total Contratos</div>
         <div class="text-xl font-bold text-gray-900 mt-1">{{ $estadisticas['total_contratos'] ?? 0 }}</div>
@@ -26,10 +26,6 @@
     <div class="bg-yellow-50 rounded-lg shadow-sm p-3">
         <div class="text-yellow-600 text-xs font-medium">Suspendidos</div>
         <div class="text-xl font-bold text-yellow-700 mt-1">{{ $estadisticas['suspendidos'] ?? 0 }}</div>
-    </div>
-    <div class="bg-red-50 rounded-lg shadow-sm p-3">
-        <div class="text-red-600 text-xs font-medium">Vencidos</div>
-        <div class="text-xl font-bold text-red-700 mt-1">{{ $estadisticas['vencidos'] ?? 0 }}</div>
     </div>
     <div class="bg-gray-50 rounded-lg shadow-sm p-3">
         <div class="text-gray-600 text-xs font-medium">Cancelados</div>
@@ -57,7 +53,6 @@
                     <option value="">Todos</option>
                     <option value="activo" {{ request('estado') == 'activo' ? 'selected' : '' }}>Activo</option>
                     <option value="suspendido" {{ request('estado') == 'suspendido' ? 'selected' : '' }}>Suspendido</option>
-                    <option value="vencido" {{ request('estado') == 'vencido' ? 'selected' : '' }}>Vencido</option>
                     <option value="cancelado" {{ request('estado') == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
                 </select>
             </div>
@@ -127,7 +122,6 @@
                             $estadoClasses = [
                                 'activo' => 'bg-green-100 text-green-800',
                                 'suspendido' => 'bg-yellow-100 text-yellow-800',
-                                'vencido' => 'bg-red-100 text-red-800',
                                 'cancelado' => 'bg-gray-100 text-gray-800',
                             ];
                             $class = $estadoClasses[$servicio->estado] ?? 'bg-gray-100 text-gray-800';
