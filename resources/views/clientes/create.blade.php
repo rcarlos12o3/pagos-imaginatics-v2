@@ -17,90 +17,96 @@
     <form action="{{ route('clientes.store') }}" method="POST" class="bg-white shadow-sm rounded-lg p-6 space-y-4">
         @csrf
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">RUC *</label>
-                <div class="flex gap-2">
-                    <input type="text" name="ruc" x-model="ruc" value="{{ old('ruc') }}" required
-                           maxlength="11"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                           @keyup.enter="consultarRuc()">
-                    <button type="button" @click="consultarRuc()"
-                            :disabled="consultando || ruc.length !== 11"
-                            class="mt-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
-                        <span x-show="!consultando">🔍 Buscar</span>
-                        <span x-show="consultando">
-                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-                <p x-show="mensaje" :class="mensajeExito ? 'text-green-600' : 'text-red-600'" class="text-sm mt-1" x-text="mensaje"></p>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Tipo Documento *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo Documento *</label>
                 <select name="tipo_documento" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="RUC">RUC</option>
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <option value="RUC" selected>RUC</option>
                     <option value="DNI">DNI</option>
                     <option value="CE">CE</option>
                     <option value="PASAPORTE">PASAPORTE</option>
                 </select>
             </div>
-        </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Razón Social *</label>
-            <input type="text" name="razon_social" x-model="razonSocial" value="{{ old('razon_social') }}" required
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">WhatsApp *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Número *</label>
+                <div class="flex gap-2">
+                    <input type="text" name="ruc" x-model="ruc" value="{{ old('ruc') }}" required
+                           maxlength="11" placeholder="20123456789"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                           @keyup.enter="consultarRuc()">
+                    <button type="button" @click="consultarRuc()"
+                            :disabled="consultando || ruc.length !== 11"
+                            class="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
+                        <span x-show="!consultando">🔍</span>
+                        <span x-show="consultando">⏳</span>
+                    </button>
+                </div>
+                <p x-show="mensaje" :class="mensajeExito ? 'text-green-600' : 'text-red-600'" class="text-xs mt-1" x-text="mensaje"></p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp *</label>
                 <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}"
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                       placeholder="+51 999 999 999"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">Monto</label>
-                <input type="number" step="0.01" name="monto" value="{{ old('monto') }}"
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
+                <input type="text" name="razon_social" x-model="razonSocial" value="{{ old('razon_social') }}" required
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">Fecha Vencimiento</label>
-                <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}"
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Comercial</label>
+                <input type="text" name="nombre_comercial" value="{{ old('nombre_comercial') }}"
+                       placeholder="Opcional"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}"
+                       placeholder="contacto@empresa.com"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
+                <select name="activo" required
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <option value="1" selected>Activo</option>
+                    <option value="0">Inactivo</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de Contacto</label>
+                <input type="text" name="contacto_nombre" value="{{ old('contacto_nombre') }}"
+                       placeholder="Opcional"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                <input type="text" name="contacto_cargo" value="{{ old('contacto_cargo') }}"
+                       placeholder="Opcional"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
             </div>
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-gray-700">Tipo de Servicio</label>
-            <select name="tipo_servicio"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="mensual">Mensual</option>
-                <option value="trimestral">Trimestral</option>
-                <option value="semestral">Semestral</option>
-                <option value="anual" selected>Anual</option>
-            </select>
-        </div>
-
-        <div class="flex items-center">
-            <input type="checkbox" name="activo" value="1" checked
-                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            <label class="ml-2 block text-sm text-gray-900">Cliente Activo</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+            <textarea name="direccion" rows="2" placeholder="Opcional"
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">{{ old('direccion') }}</textarea>
         </div>
 
         <div class="flex justify-end gap-4 pt-4">

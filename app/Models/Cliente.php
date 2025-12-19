@@ -16,6 +16,7 @@ class Cliente extends Model
         'ruc',
         'tipo_documento',
         'razon_social',
+        'nombre_comercial',
         'monto',
         'fecha_vencimiento',
         'whatsapp',

@@ -44,16 +44,14 @@ class ClienteController extends Controller
             'ruc' => 'required|string|max:11|unique:clientes,ruc',
             'tipo_documento' => 'required|in:RUC,DNI,CE,PASAPORTE',
             'razon_social' => 'required|string|max:255',
-            'monto' => 'nullable|numeric|min:0',
-            'fecha_vencimiento' => 'nullable|date',
+            'nombre_comercial' => 'nullable|string|max:255',
             'whatsapp' => 'required|string|max:15',
             'email' => 'nullable|email|max:255',
             'contacto_nombre' => 'nullable|string|max:255',
             'contacto_cargo' => 'nullable|string|max:100',
-            'tipo_servicio' => 'nullable|in:mensual,trimestral,semestral,anual',
             'direccion' => 'nullable|string',
             'estado_sunat' => 'nullable|string|max:50',
-            'activo' => 'boolean',
+            'activo' => 'required|boolean',
         ]);
 
         Cliente::create($validated);
@@ -80,16 +78,14 @@ class ClienteController extends Controller
             'ruc' => 'required|string|max:11|unique:clientes,ruc,' . $cliente->id,
             'tipo_documento' => 'required|in:RUC,DNI,CE,PASAPORTE',
             'razon_social' => 'required|string|max:255',
-            'monto' => 'nullable|numeric|min:0',
-            'fecha_vencimiento' => 'nullable|date',
+            'nombre_comercial' => 'nullable|string|max:255',
             'whatsapp' => 'required|string|max:15',
             'email' => 'nullable|email|max:255',
             'contacto_nombre' => 'nullable|string|max:255',
             'contacto_cargo' => 'nullable|string|max:100',
-            'tipo_servicio' => 'nullable|in:mensual,trimestral,semestral,anual',
             'direccion' => 'nullable|string',
             'estado_sunat' => 'nullable|string|max:50',
-            'activo' => 'boolean',
+            'activo' => 'required|boolean',
         ]);
 
         $cliente->update($validated);
