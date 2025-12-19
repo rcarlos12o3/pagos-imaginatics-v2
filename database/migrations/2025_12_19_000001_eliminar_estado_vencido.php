@@ -10,6 +10,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Verificar que la tabla existe antes de modificarla
+        $tableExists = DB::select("SHOW TABLES LIKE 'servicios_contratados'");
+
+        if (empty($tableExists)) {
+            // Tabla no existe - estamos en entorno de testing vacío
+            return;
+        }
+
         // 1. Eliminar el trigger automático
         DB::unprepared('DROP TRIGGER IF EXISTS tr_actualizar_servicio_vencido');
 
