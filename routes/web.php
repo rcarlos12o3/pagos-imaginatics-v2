@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ComunicacionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnvioController;
 use App\Http\Controllers\PagoController;
@@ -24,6 +25,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('clientes', ClienteController::class);
+
+    // Carga masiva de clientes
+    Route::get('/clientes-plantilla', [ClienteController::class, 'descargarPlantilla'])->name('clientes.plantilla');
+    Route::post('/clientes-validar', [ClienteController::class, 'validarCarga'])->name('clientes.validar');
+    Route::post('/clientes-procesar', [ClienteController::class, 'procesarCarga'])->name('clientes.procesar');
 
     // Historial de Envíos WhatsApp
     Route::get('/historial', [EnvioController::class, 'index'])->name('historial.index');
@@ -65,4 +71,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pagos/{pago}/edit', [PagoController::class, 'edit'])->name('pagos.edit');
     Route::put('/pagos/{pago}', [PagoController::class, 'update'])->name('pagos.update');
     Route::delete('/pagos/{pago}', [PagoController::class, 'destroy'])->name('pagos.destroy');
+
+    // Comunicaciones
+    Route::get('/comunicaciones', [ComunicacionController::class, 'index'])->name('comunicaciones.index');
+    Route::get('/api/comunicaciones/clientes', [ComunicacionController::class, 'obtenerClientes'])->name('comunicaciones.clientes');
+    Route::post('/api/comunicaciones/enviar', [ComunicacionController::class, 'enviar'])->name('comunicaciones.enviar');
 });

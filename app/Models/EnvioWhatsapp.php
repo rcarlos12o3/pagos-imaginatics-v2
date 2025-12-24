@@ -134,6 +134,7 @@ class EnvioWhatsapp extends Model
             'servicio_suspendido' => 'Servicio Suspendido',
             'servicio_renovado' => 'Servicio Renovado',
             'servicio_activado' => 'Servicio Activado',
+            'comunicacion' => 'Comunicación',
             default => $this->tipo_envio,
         };
     }
@@ -160,6 +161,7 @@ class EnvioWhatsapp extends Model
             'orden_pago' => 'bg-blue-100 text-blue-800',
             'recordatorio_proximo' => 'bg-yellow-100 text-yellow-800',
             'recordatorio_vencido' => 'bg-red-100 text-red-800',
+            'comunicacion' => 'bg-purple-100 text-purple-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }

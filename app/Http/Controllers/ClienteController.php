@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Imports\ClientesImport;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Session;
 
 class ClienteController extends Controller
 {
@@ -100,5 +103,128 @@ class ClienteController extends Controller
 
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente eliminado exitosamente');
+    }
+
+    /**
+     * Descargar plantilla CSV
+     */
+    public function descargarPlantilla()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="plantilla_clientes.csv"',
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+
+            // Escribir BOM para UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Cabeceras
+            fputcsv($file, ['RUC', 'RAZON_SOCIAL', 'WHATSAPP', 'ESTADO']);
+
+            // Datos de ejemplo
+            fputcsv($file, ['20123456789', 'Empresa Ejemplo SAC', '987654321', 'activo']);
+            fputcsv($file, ['20987654321', 'Comercializadora ABC EIRL', '912345678', 'inactivo']);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Validar archivo cargado
+     */
+    public function validarCarga(Request $request)
+    {
+        try {
+            $request->validate([
+                'archivo' => 'required|file|mimes:csv,xlsx,xls|max:2048'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archivo no válido. Debe ser CSV, XLSX o XLS (máximo 2MB)'
+            ], 422);
+        }
+
+        try {
+            $import = new ClientesImport();
+            Excel::import($import, $request->file('archivo'));
+
+            $validData = $import->getData();
+            $allRows = $import->getAllRows();
+            $errors = $import->getErrors();
+            $warnings = $import->getWarnings();
+
+            // Guardar solo datos válidos en sesión para el procesamiento
+            Session::put('clientes_importacion', $validData);
+
+            return response()->json([
+                'success' => true,
+                'data' => $validData,
+                'allRows' => $allRows,
+                'errors' => $errors,
+                'warnings' => $warnings,
+                'total' => count($validData),
+                'totalRows' => count($allRows),
+                'message' => count($validData) . ' clientes válidos de ' . count($allRows) . ' procesados'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar archivo: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Procesar la importación confirmada
+     */
+    public function procesarCarga(Request $request)
+    {
+        $clientes = Session::get('clientes_importacion');
+
+        if (!$clientes) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay datos para procesar'
+            ], 400);
+        }
+
+        try {
+            $creados = 0;
+
+            foreach ($clientes as $clienteData) {
+                Cliente::create([
+                    'ruc' => $clienteData['ruc'],
+                    'tipo_documento' => 'RUC',
+                    'razon_social' => $clienteData['razon_social'],
+                    'whatsapp' => $clienteData['whatsapp'],
+                    'activo' => $clienteData['activo'],
+                    'fecha_creacion' => now(),
+                ]);
+
+                $creados++;
+            }
+
+            // Limpiar sesión
+            Session::forget('clientes_importacion');
+
+            return response()->json([
+                'success' => true,
+                'creados' => $creados,
+                'message' => "{$creados} clientes importados exitosamente"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar clientes: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
