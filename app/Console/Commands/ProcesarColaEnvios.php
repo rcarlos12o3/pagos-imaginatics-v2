@@ -22,10 +22,10 @@ class ProcesarColaEnvios extends Command
 
     protected $description = 'Procesa cola de envíos de WhatsApp con comportamiento humano';
 
-    // Configuración de comportamiento humano
-    const PAUSA_ENTRE_MENSAJES = [15, 30]; // segundos entre imagen y texto
-    const PAUSA_ENTRE_CLIENTES = [30, 90]; // segundos entre clientes
-    const MAX_MENSAJES_POR_HORA = 30; // límite para no ser detectado como spam
+    // Configuración de comportamiento humano (optimizado)
+    const PAUSA_ENTRE_MENSAJES = [10, 15]; // segundos entre imagen y texto
+    const PAUSA_ENTRE_CLIENTES = [15, 30]; // segundos entre clientes
+    const MAX_MENSAJES_POR_HORA = 60; // límite seguro para cuentas business
     const MAX_TRABAJOS_POR_EJECUCION = 50;
     const TIMEOUT_PROCESAMIENTO = 7200; // 2 horas
     const HORARIO_INICIO = 8; // 8 AM

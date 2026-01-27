@@ -404,9 +404,9 @@ class EnvioController extends Controller
                     $servicio->save();
                 }
 
-                // Despachar Job con delay acumulativo aleatorio (30-90 segundos entre cada uno)
-                // Simula comportamiento humano impredecible
-                $delaySegundos += rand(30, 90);
+                // Despachar Job con delay acumulativo aleatorio (10-20 segundos entre cada uno)
+                // Balance entre velocidad y seguridad anti-spam
+                $delaySegundos += rand(10, 20);
                 \App\Jobs\EnviarOrdenPago::dispatch($trabajo->id)
                     ->delay(now()->addSeconds($delaySegundos));
             }
@@ -418,7 +418,7 @@ class EnvioController extends Controller
                 'data' => [
                     'sesion_id' => $sesion->id,
                     'trabajos_agregados' => $trabajosAgregados,
-                    'mensaje' => "✅ {$trabajosAgregados} órdenes agregadas a la cola. Se enviarán con delays de 15-45 segundos entre cada una (comportamiento humano).",
+                    'mensaje' => "✅ {$trabajosAgregados} órdenes agregadas a la cola. Se enviarán con delays de 10-20 segundos entre cada una.",
                 ],
             ]);
 
