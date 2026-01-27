@@ -47,11 +47,41 @@
                 <p x-show="mensaje" :class="mensajeExito ? 'text-green-600' : 'text-red-600'" class="text-xs mt-1" x-text="mensaje"></p>
             </div>
 
+            @php
+                // Detectar código de país del número existente
+                $whatsappCompleto = old('whatsapp', $cliente->whatsapp);
+                $codigosOrdenados = ['593', '591', '51', '57', '56', '55', '54', '52', '34', '1'];
+                $codigoDetectado = '51';
+                $numeroSinCodigo = $whatsappCompleto;
+                foreach ($codigosOrdenados as $codigo) {
+                    if (str_starts_with($whatsappCompleto, $codigo)) {
+                        $codigoDetectado = $codigo;
+                        $numeroSinCodigo = substr($whatsappCompleto, strlen($codigo));
+                        break;
+                    }
+                }
+            @endphp
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp *</label>
-                <input type="text" name="whatsapp" value="{{ old('whatsapp', $cliente->whatsapp) }}" required
-                       placeholder="+51 999 999 999"
-                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                <div class="flex">
+                    <select name="codigo_pais" id="codigo_pais"
+                            class="rounded-l-md border-r-0 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-gray-50 w-24">
+                        <option value="51" {{ $codigoDetectado == '51' ? 'selected' : '' }}>🇵🇪 +51</option>
+                        <option value="1" {{ $codigoDetectado == '1' ? 'selected' : '' }}>🇺🇸 +1</option>
+                        <option value="54" {{ $codigoDetectado == '54' ? 'selected' : '' }}>🇦🇷 +54</option>
+                        <option value="55" {{ $codigoDetectado == '55' ? 'selected' : '' }}>🇧🇷 +55</option>
+                        <option value="56" {{ $codigoDetectado == '56' ? 'selected' : '' }}>🇨🇱 +56</option>
+                        <option value="57" {{ $codigoDetectado == '57' ? 'selected' : '' }}>🇨🇴 +57</option>
+                        <option value="52" {{ $codigoDetectado == '52' ? 'selected' : '' }}>🇲🇽 +52</option>
+                        <option value="593" {{ $codigoDetectado == '593' ? 'selected' : '' }}>🇪🇨 +593</option>
+                        <option value="591" {{ $codigoDetectado == '591' ? 'selected' : '' }}>🇧🇴 +591</option>
+                        <option value="34" {{ $codigoDetectado == '34' ? 'selected' : '' }}>🇪🇸 +34</option>
+                    </select>
+                    <input type="text" id="whatsapp_numero" value="{{ $numeroSinCodigo }}" required
+                           placeholder="999999999" maxlength="15"
+                           class="block w-full rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <input type="hidden" name="whatsapp" id="whatsapp_completo" value="{{ $cliente->whatsapp }}">
+                </div>
             </div>
         </div>
 
@@ -124,6 +154,17 @@
 </div>
 
 <script>
+// Concatenar código + número
+function actualizarWhatsapp() {
+    const codigo = document.getElementById('codigo_pais').value;
+    const numero = document.getElementById('whatsapp_numero').value.replace(/\D/g, '');
+    document.getElementById('whatsapp_completo').value = codigo + numero;
+}
+
+document.getElementById('codigo_pais').addEventListener('change', actualizarWhatsapp);
+document.getElementById('whatsapp_numero').addEventListener('input', actualizarWhatsapp);
+document.querySelector('form').addEventListener('submit', actualizarWhatsapp);
+
 function consultaRuc() {
     return {
         ruc: '{{ old('ruc', $cliente->ruc) }}',

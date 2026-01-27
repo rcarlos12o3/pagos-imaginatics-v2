@@ -76,7 +76,27 @@
                             {{ $cliente->razon_social }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ $cliente->whatsapp }}
+                            @php
+                                $wa = $cliente->whatsapp;
+                                $banderas = [
+                                    '593' => '🇪🇨', '591' => '🇧🇴', '51' => '🇵🇪', '57' => '🇨🇴',
+                                    '56' => '🇨🇱', '55' => '🇧🇷', '54' => '🇦🇷', '52' => '🇲🇽',
+                                    '34' => '🇪🇸', '1' => '🇺🇸'
+                                ];
+                                $bandera = '';
+                                $numero = $wa;
+                                foreach (['593', '591', '51', '57', '56', '55', '54', '52', '34', '1'] as $cod) {
+                                    if (str_starts_with($wa, $cod)) {
+                                        $bandera = $banderas[$cod];
+                                        $numero = substr($wa, strlen($cod));
+                                        break;
+                                    }
+                                }
+                            @endphp
+                            <span class="inline-flex items-center gap-1">
+                                <span>{{ $bandera }}</span>
+                                <span>{{ $numero }}</span>
+                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {{ $cliente->email ?? '-' }}

@@ -48,9 +48,25 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp *</label>
-                <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" required
-                       placeholder="+51 999 999 999"
-                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                <div class="flex">
+                    <select name="codigo_pais" id="codigo_pais"
+                            class="rounded-l-md border-r-0 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-gray-50 w-24">
+                        <option value="51" selected>🇵🇪 +51</option>
+                        <option value="1">🇺🇸 +1</option>
+                        <option value="54">🇦🇷 +54</option>
+                        <option value="55">🇧🇷 +55</option>
+                        <option value="56">🇨🇱 +56</option>
+                        <option value="57">🇨🇴 +57</option>
+                        <option value="52">🇲🇽 +52</option>
+                        <option value="593">🇪🇨 +593</option>
+                        <option value="591">🇧🇴 +591</option>
+                        <option value="34">🇪🇸 +34</option>
+                    </select>
+                    <input type="text" id="whatsapp_numero" value="{{ old('whatsapp_numero') }}" required
+                           placeholder="999999999" maxlength="15"
+                           class="block w-full rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <input type="hidden" name="whatsapp" id="whatsapp_completo" value="{{ old('whatsapp') }}">
+                </div>
             </div>
         </div>
 
@@ -123,6 +139,17 @@
 </div>
 
 <script>
+// Concatenar código + número
+function actualizarWhatsapp() {
+    const codigo = document.getElementById('codigo_pais').value;
+    const numero = document.getElementById('whatsapp_numero').value.replace(/\D/g, '');
+    document.getElementById('whatsapp_completo').value = codigo + numero;
+}
+
+document.getElementById('codigo_pais').addEventListener('change', actualizarWhatsapp);
+document.getElementById('whatsapp_numero').addEventListener('input', actualizarWhatsapp);
+document.querySelector('form').addEventListener('submit', actualizarWhatsapp);
+
 function consultaRuc() {
     return {
         ruc: '{{ old('ruc') }}',
