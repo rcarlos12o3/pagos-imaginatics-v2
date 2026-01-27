@@ -14,6 +14,8 @@
     progreso: 0,
     progresoTexto: '',
     busqueda: '',
+    modalConfirmacion: false,
+    serviciosAEnviar: [],
 
     async cargarServiciosPendientes() {
         this.cargando = true;
@@ -65,19 +67,17 @@
         this.seleccionados = [];
     },
 
-    async enviarSeleccionados() {
+    mostrarConfirmacion() {
         if (this.seleccionados.length === 0) {
-            alert('⚠️ Por favor selecciona al menos un servicio');
+            alert('Por favor selecciona al menos un servicio');
             return;
         }
+        this.serviciosAEnviar = this.servicios.filter(s => this.seleccionados.includes(s.contrato_id));
+        this.modalConfirmacion = true;
+    },
 
-        const serviciosAEnviar = this.servicios.filter(s => this.seleccionados.includes(s.contrato_id));
-        const nombres = serviciosAEnviar.map(s => s.empresa).join('\\n• ');
-
-        if (!confirm(`📤 ¿Enviar órdenes de pago a los siguientes servicios?\\n\\n• ${nombres}\\n\\n✅ Total: ${serviciosAEnviar.length}`)) {
-            return;
-        }
-
+    async confirmarEnvio() {
+        this.modalConfirmacion = false;
         this.enviando = true;
         this.progreso = 10;
         this.progresoTexto = 'Generando imágenes de órdenes de pago...';
@@ -86,10 +86,10 @@
             const serviciosConImagenes = [];
 
             // Generar canvas para cada servicio
-            for (let i = 0; i < serviciosAEnviar.length; i++) {
-                const servicio = serviciosAEnviar[i];
-                this.progresoTexto = `Generando imagen ${i + 1} de ${serviciosAEnviar.length}...`;
-                this.progreso = 10 + ((i / serviciosAEnviar.length) * 60);
+            for (let i = 0; i < this.serviciosAEnviar.length; i++) {
+                const servicio = this.serviciosAEnviar[i];
+                this.progresoTexto = `Generando imagen ${i + 1} de ${this.serviciosAEnviar.length}...`;
+                this.progreso = 10 + ((i / this.serviciosAEnviar.length) * 60);
 
                 const canvas = await generarCanvasOrdenPago(servicio);
                 const imagenBase64 = canvasToBase64(canvas);
@@ -255,7 +255,7 @@
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
                 ✗ Deseleccionar
             </button>
-            <button @click="enviarSeleccionados()"
+            <button @click="mostrarConfirmacion()"
                     class="px-6 py-2 rounded-lg text-white transition-colors text-sm font-medium flex items-center gap-2"
                     :class="seleccionados.length > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
                     :disabled="seleccionados.length === 0 || enviando">
@@ -379,7 +379,73 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Confirmación -->
+    <div x-show="modalConfirmacion" x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+         @click.self="modalConfirmacion = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full" @click.stop>
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
+                <div class="bg-green-100 rounded-full p-2">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Confirmar Envío</h3>
+                    <p class="text-sm text-gray-500">Se enviarán órdenes de pago a los siguientes clientes</p>
+                </div>
+            </div>
+
+            <!-- Body - Lista de clientes -->
+            <div class="px-6 py-4 max-h-80 overflow-y-auto">
+                <template x-for="(servicio, index) in serviciosAEnviar" :key="servicio.contrato_id">
+                    <div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-medium" x-text="index + 1"></span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate" x-text="servicio.empresa"></p>
+                            <p class="text-xs text-gray-500" x-text="servicio.ruc + ' • ' + servicio.moneda + ' ' + servicio.precio"></p>
+                        </div>
+                        <span class="flex-shrink-0 text-xs px-2 py-1 rounded-full"
+                              :class="servicio.dias_hasta_vencer < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                              x-text="servicio.dias_hasta_vencer < 0 ? 'Vencido' : 'En plazo'"></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    Total: <span class="font-semibold text-gray-900" x-text="serviciosAEnviar.length"></span> clientes
+                </div>
+                <div class="flex gap-3">
+                    <button @click="modalConfirmacion = false"
+                            class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium">
+                        Cancelar
+                    </button>
+                    <button @click="confirmarEnvio()"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Confirmar Envío
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+[x-cloak] { display: none !important; }
+</style>
 
 @push('scripts')
 <script src="/js/orden-pago.js"></script>
