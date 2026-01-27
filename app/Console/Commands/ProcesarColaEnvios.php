@@ -300,7 +300,7 @@ class ProcesarColaEnvios extends Command
     }
 
     /**
-     * Enviar imagen por WhatsApp
+     * Enviar imagen por WhatsApp (Evolution API v1.8.x)
      */
     private function enviarImagen(string $numero, string $imagenBase64, int $clienteId, string $mensajeTexto, array $config): array
     {
@@ -311,19 +311,21 @@ class ProcesarColaEnvios extends Command
                 $base64Puro = preg_replace('/^data:image\/(png|jpeg|jpg);base64,/', '', $imagenBase64);
             }
 
-            $url = $config['api_url'] . 'message/sendmedia/' . $config['instancia'];
+            $url = rtrim($config['api_url'], '/') . '/message/sendMedia/' . $config['instancia'];
 
             $response = Http::timeout(30)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $config['token'],
+                    'apikey' => $config['token'],
                     'Content-Type' => 'application/json'
                 ])
                 ->post($url, [
                     'number' => $numero,
-                    'mediatype' => 'image',
-                    'filename' => "orden_pago_{$clienteId}.png",
-                    'media' => $base64Puro,
-                    'caption' => $mensajeTexto
+                    'mediaMessage' => [
+                        'mediatype' => 'image',
+                        'fileName' => "orden_pago_{$clienteId}.png",
+                        'media' => $base64Puro,
+                        'caption' => $mensajeTexto,
+                    ],
                 ]);
 
             if (!$response->successful()) {
@@ -348,21 +350,23 @@ class ProcesarColaEnvios extends Command
     }
 
     /**
-     * Enviar texto por WhatsApp
+     * Enviar texto por WhatsApp (Evolution API v1.8.x)
      */
     private function enviarTexto(string $numero, string $mensaje, array $config): array
     {
         try {
-            $url = $config['api_url'] . 'message/sendtext/' . $config['instancia'];
+            $url = rtrim($config['api_url'], '/') . '/message/sendText/' . $config['instancia'];
 
             $response = Http::timeout(30)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $config['token'],
+                    'apikey' => $config['token'],
                     'Content-Type' => 'application/json'
                 ])
                 ->post($url, [
                     'number' => $numero,
-                    'text' => $mensaje
+                    'textMessage' => [
+                        'text' => $mensaje,
+                    ],
                 ]);
 
             if (!$response->successful()) {

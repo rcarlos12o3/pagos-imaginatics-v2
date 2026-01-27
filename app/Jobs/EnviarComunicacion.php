@@ -123,13 +123,13 @@ class EnviarComunicacion implements ShouldQueue
     }
 
     /**
-     * Enviar mensaje con imagen
+     * Enviar mensaje con imagen (Evolution API v1.8.x)
      */
     protected function enviarConImagen($trabajo, $token, $instancia, $apiUrl)
     {
-        $url = rtrim($apiUrl, '/') . '/message/sendmedia/' . $instancia;
+        $url = rtrim($apiUrl, '/') . '/message/sendMedia/' . $instancia;
 
-        // Limpiar base64
+        // Limpiar base64 - remover prefijo si existe
         $imagenBase64 = $trabajo->imagen_base64;
         if (strpos($imagenBase64, 'data:image') === 0) {
             $imagenBase64 = preg_replace('/^data:image\/[a-z]+;base64,/', '', $imagenBase64);
@@ -137,33 +137,37 @@ class EnviarComunicacion implements ShouldQueue
 
         return Http::timeout(30)
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'apikey' => $token,
                 'Content-Type' => 'application/json',
             ])
             ->post($url, [
                 'number' => $trabajo->whatsapp,
-                'mediatype' => 'image',
-                'filename' => "comunicacion_{$trabajo->cliente_id}.png",
-                'media' => $imagenBase64,
-                'caption' => $trabajo->mensaje_texto,
+                'mediaMessage' => [
+                    'mediatype' => 'image',
+                    'fileName' => "comunicacion_{$trabajo->cliente_id}.png",
+                    'media' => $imagenBase64,
+                    'caption' => $trabajo->mensaje_texto,
+                ],
             ]);
     }
 
     /**
-     * Enviar solo texto
+     * Enviar solo texto (Evolution API v1.8.x)
      */
     protected function enviarSoloTexto($trabajo, $token, $instancia, $apiUrl)
     {
-        $url = rtrim($apiUrl, '/') . '/message/sendtext/' . $instancia;
+        $url = rtrim($apiUrl, '/') . '/message/sendText/' . $instancia;
 
         return Http::timeout(30)
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'apikey' => $token,
                 'Content-Type' => 'application/json',
             ])
             ->post($url, [
                 'number' => $trabajo->whatsapp,
-                'text' => $trabajo->mensaje_texto,
+                'textMessage' => [
+                    'text' => $trabajo->mensaje_texto,
+                ],
             ]);
     }
 
