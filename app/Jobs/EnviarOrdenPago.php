@@ -61,7 +61,7 @@ class EnviarOrdenPago implements ShouldQueue
                 throw new \Exception('Configuración de WhatsApp incompleta en base de datos');
             }
 
-            // URL completa para envío de medios (Evolution API v1.8.x)
+            // URL completa para envío de medios (Evolution API v2.x)
             $url = rtrim($apiUrl, '/') . '/message/sendMedia/' . $instancia;
 
             // Limpiar base64: remover prefijo data:image/png;base64, si existe
@@ -70,7 +70,7 @@ class EnviarOrdenPago implements ShouldQueue
                 $imagenBase64 = preg_replace('/^data:image\/[a-z]+;base64,/', '', $imagenBase64);
             }
 
-            // Enviar a WhatsApp API (Evolution API v1.8.x)
+            // Enviar a WhatsApp API (Evolution API v2.x)
             $response = Http::timeout(30)
                 ->withHeaders([
                     'apikey' => $token,
@@ -78,12 +78,10 @@ class EnviarOrdenPago implements ShouldQueue
                 ])
                 ->post($url, [
                     'number' => $trabajo->whatsapp,
-                    'mediaMessage' => [
-                        'mediatype' => 'image',
-                        'fileName' => 'orden_pago.png',
-                        'media' => $imagenBase64,
-                        'caption' => $trabajo->mensaje_texto,
-                    ],
+                    'mediatype' => 'image',
+                    'mimetype' => 'image/png',
+                    'caption' => $trabajo->mensaje_texto,
+                    'media' => $imagenBase64,
                 ]);
 
             if ($response->successful()) {

@@ -123,7 +123,7 @@ class EnviarComunicacion implements ShouldQueue
     }
 
     /**
-     * Enviar mensaje con imagen (Evolution API v1.8.x)
+     * Enviar mensaje con imagen (Evolution API v2.x)
      */
     protected function enviarConImagen($trabajo, $token, $instancia, $apiUrl)
     {
@@ -142,17 +142,15 @@ class EnviarComunicacion implements ShouldQueue
             ])
             ->post($url, [
                 'number' => $trabajo->whatsapp,
-                'mediaMessage' => [
-                    'mediatype' => 'image',
-                    'fileName' => "comunicacion_{$trabajo->cliente_id}.png",
-                    'media' => $imagenBase64,
-                    'caption' => $trabajo->mensaje_texto,
-                ],
+                'mediatype' => 'image',
+                'mimetype' => 'image/png',
+                'caption' => $trabajo->mensaje_texto,
+                'media' => $imagenBase64,
             ]);
     }
 
     /**
-     * Enviar solo texto (Evolution API v1.8.x)
+     * Enviar solo texto (Evolution API v2.x)
      */
     protected function enviarSoloTexto($trabajo, $token, $instancia, $apiUrl)
     {

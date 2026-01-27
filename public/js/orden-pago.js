@@ -56,8 +56,9 @@ async function generarCanvasOrdenPago(servicio) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        canvas.width = 915;
-        canvas.height = 550;
+        // Tamaño optimizado para WhatsApp (más compacto)
+        canvas.width = 600;
+        canvas.height = 380;
 
         // Fondo blanco
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.FONDO_BLANCO;
@@ -69,52 +70,52 @@ async function generarCanvasOrdenPago(servicio) {
 
         // Título principal
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.PRIMARIO;
-        ctx.font = 'bold 28px Arial';
-        ctx.fillText('IMAGINATICS PERU SAC', 50, 40);
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('IMAGINATICS PERU SAC', 30, 25);
 
         // Línea separadora
         ctx.strokeStyle = CONFIG_IMAGINATICS.COLORES.PRIMARIO;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(50, 80);
-        ctx.lineTo(865, 80);
+        ctx.moveTo(30, 55);
+        ctx.lineTo(570, 55);
         ctx.stroke();
 
         // Texto principal
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.TEXTO_PRINCIPAL;
-        ctx.font = '24px Arial';
-        ctx.fillText('Queremos recordarte que tiene 1', 50, 120);
-        ctx.fillText('orden de pago que vence el dia', 50, 150);
+        ctx.font = '16px Arial';
+        ctx.fillText('Queremos recordarte que tiene 1', 30, 70);
+        ctx.fillText('orden de pago que vence el dia', 30, 90);
 
         // Fecha destacada
         const fechaTexto = convertirFechaATexto(servicio.fecha_vencimiento_periodo_actual);
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.SECUNDARIO;
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 22px Arial';
         const fechaWidth = ctx.measureText(fechaTexto).width;
         const centerX = (canvas.width - fechaWidth) / 2;
-        ctx.fillText(fechaTexto, centerX, 200);
+        ctx.fillText(fechaTexto, centerX, 125);
 
         // Marco para la fecha
         ctx.strokeStyle = CONFIG_IMAGINATICS.COLORES.SECUNDARIO;
         ctx.lineWidth = 2;
-        ctx.strokeRect(centerX - 20, 195, fechaWidth + 40, 45);
+        ctx.strokeRect(centerX - 15, 120, fechaWidth + 30, 35);
 
         // Información del cliente
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.TEXTO_SECUNDARIO;
-        ctx.font = '18px Arial';
-        ctx.fillText('Cliente: ' + servicio.empresa, 50, 270);
-        ctx.fillText('RUC: ' + servicio.ruc, 50, 295);
-        ctx.fillText('Monto a pagar: ' + servicio.moneda + ' ' + servicio.precio, 50, 320);
+        ctx.font = '14px Arial';
+        ctx.fillText('Cliente: ' + servicio.empresa, 30, 175);
+        ctx.fillText('RUC: ' + servicio.ruc, 30, 195);
+        ctx.fillText('Monto a pagar: ' + servicio.moneda + ' ' + servicio.precio, 30, 215);
 
         // Cuentas bancarias
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.PRIMARIO;
-        ctx.font = 'bold 20px Arial';
-        ctx.fillText('Realice su pago a las siguientes cuentas:', 50, 360);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Realice su pago a las siguientes cuentas:', 30, 245);
 
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.TEXTO_SECUNDARIO;
-        ctx.font = '16px Arial';
+        ctx.font = '12px Arial';
         CONFIG_IMAGINATICS.CUENTAS_BANCARIAS.forEach((cuenta, index) => {
-            ctx.fillText(cuenta, 50, 390 + (index * 25));
+            ctx.fillText(cuenta, 30, 265 + (index * 18));
         });
 
         // Cargar imágenes (opcional)
@@ -130,7 +131,7 @@ async function generarCanvasOrdenPago(servicio) {
         const logo = new Image();
         logo.onload = function () {
             try {
-                ctx.drawImage(logo, 720, 40, 145, 80);
+                ctx.drawImage(logo, 480, 20, 100, 55);
             } catch (e) {
                 console.warn('Error al dibujar logo:', e);
             }
@@ -143,7 +144,7 @@ async function generarCanvasOrdenPago(servicio) {
         const mascota = new Image();
         mascota.onload = function () {
             try {
-                ctx.drawImage(mascota, 650, 270, 200, 200);
+                ctx.drawImage(mascota, 450, 180, 130, 130);
             } catch (e) {
                 console.warn('Error al dibujar mascota:', e);
             }

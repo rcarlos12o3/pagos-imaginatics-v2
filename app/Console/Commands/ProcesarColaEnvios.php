@@ -300,7 +300,7 @@ class ProcesarColaEnvios extends Command
     }
 
     /**
-     * Enviar imagen por WhatsApp (Evolution API v1.8.x)
+     * Enviar imagen por WhatsApp (Evolution API v2.x)
      */
     private function enviarImagen(string $numero, string $imagenBase64, int $clienteId, string $mensajeTexto, array $config): array
     {
@@ -320,12 +320,10 @@ class ProcesarColaEnvios extends Command
                 ])
                 ->post($url, [
                     'number' => $numero,
-                    'mediaMessage' => [
-                        'mediatype' => 'image',
-                        'fileName' => "orden_pago_{$clienteId}.png",
-                        'media' => $base64Puro,
-                        'caption' => $mensajeTexto,
-                    ],
+                    'mediatype' => 'image',
+                    'mimetype' => 'image/png',
+                    'caption' => $mensajeTexto,
+                    'media' => $base64Puro,
                 ]);
 
             if (!$response->successful()) {
@@ -350,7 +348,7 @@ class ProcesarColaEnvios extends Command
     }
 
     /**
-     * Enviar texto por WhatsApp (Evolution API v1.8.x)
+     * Enviar texto por WhatsApp (Evolution API v2.x)
      */
     private function enviarTexto(string $numero, string $mensaje, array $config): array
     {
