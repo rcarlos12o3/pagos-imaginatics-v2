@@ -119,9 +119,6 @@ jobs:
           php artisan cache:clear
           php artisan route:clear
 
-          echo "📦 Publishing Livewire assets..."
-          php artisan livewire:publish --assets --force
-
           echo "🔄 Optimizing Laravel..."
           php artisan config:cache
           php artisan route:cache
