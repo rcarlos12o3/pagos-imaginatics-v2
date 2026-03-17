@@ -17,71 +17,10 @@ class PagoController extends Controller
     /**
      * Mostrar listado de pagos con estadísticas
      */
-    public function index(Request $request): View
+    public function index(): View
     {
-        // Obtener mes y año actuales o de los filtros
-        $mes = $request->input('mes', now()->month);
-        $anio = $request->input('anio', now()->year);
-
-        // Construir query base
-        $query = HistorialPago::with('cliente')
-            ->join('clientes', 'historial_pagos.cliente_id', '=', 'clientes.id');
-
-        // Búsqueda instantánea
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('clientes.ruc', 'like', "%{$search}%")
-                  ->orWhere('clientes.razon_social', 'like', "%{$search}%")
-                  ->orWhere('clientes.nombre_comercial', 'like', "%{$search}%");
-            });
-        }
-
-        // Filtro por mes y año
-        if ($mes && $anio) {
-            $query->whereYear('historial_pagos.fecha_pago', $anio)
-                  ->whereMonth('historial_pagos.fecha_pago', $mes);
-        }
-
-        // Filtro por método
-        if ($request->filled('metodo')) {
-            $query->where('historial_pagos.metodo_pago', $request->input('metodo'));
-        }
-
-        // Filtro por banco
-        if ($request->filled('banco')) {
-            $query->where('historial_pagos.banco', $request->input('banco'));
-        }
-
-        // Seleccionar columnas específicas para evitar conflictos
-        $query->select('historial_pagos.*');
-
-        // Obtener pagos paginados
-        $pagos = $query->orderBy('historial_pagos.fecha_pago', 'desc')
-                       ->orderBy('historial_pagos.id', 'desc')
-                       ->paginate(15)
-                       ->withQueryString();
-
-        // Calcular estadísticas del mes actual
-        $estadisticasMes = HistorialPago::whereYear('fecha_pago', now()->year)
-            ->whereMonth('fecha_pago', now()->month)
-            ->selectRaw('
-                COALESCE(SUM(monto_pagado), 0) as total_recaudado,
-                COUNT(*) as cantidad_pagos,
-                COALESCE(AVG(monto_pagado), 0) as pago_promedio,
-                COALESCE(MAX(monto_pagado), 0) as mayor_pago
-            ')
-            ->first();
-
-        // Obtener lista de bancos únicos para el filtro
-        $bancos = HistorialPago::whereNotNull('banco')
-            ->distinct()
-            ->pluck('banco')
-            ->filter()
-            ->sort()
-            ->values();
-
-        return view('pagos.index', compact('pagos', 'estadisticasMes', 'bancos', 'mes', 'anio'));
+        // Ahora usa el componente Livewire PagosTable
+        return view('pagos.index');
     }
 
     /**
