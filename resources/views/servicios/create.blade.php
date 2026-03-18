@@ -18,24 +18,18 @@
         @csrf
 
         <!-- Selección de Cliente -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
-            @if($cliente)
+        @if($cliente)
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
                 <input type="hidden" name="cliente_id" value="{{ $cliente->id }}">
                 <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <div class="font-medium text-gray-900">{{ $cliente->razon_social }}</div>
                     <div class="text-sm text-gray-600">RUC: {{ $cliente->ruc }}</div>
                 </div>
-            @else
-                <select name="cliente_id" x-model="clienteId" required
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">Seleccione un cliente</option>
-                    @foreach(\App\Models\Cliente::where('activo', true)->orderBy('razon_social')->get() as $c)
-                        <option value="{{ $c->id }}">{{ $c->razon_social }} - RUC: {{ $c->ruc }}</option>
-                    @endforeach
-                </select>
-            @endif
-        </div>
+            </div>
+        @else
+            <livewire:cliente-selector :cliente-id="old('cliente_id')" />
+        @endif
 
         <!-- Selección de Servicio -->
         <div>

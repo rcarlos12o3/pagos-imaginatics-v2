@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Gestión de Clientes') - Imaginatics</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="bg-gray-50 antialiased" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden">
@@ -230,5 +231,6 @@
     </div>
 
     @stack('scripts')
+    @livewireScripts
 </body>
 </html>
