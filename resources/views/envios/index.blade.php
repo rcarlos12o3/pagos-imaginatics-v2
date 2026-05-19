@@ -420,6 +420,35 @@
                 </template>
             </div>
 
+            <!-- Totales por moneda -->
+            <div class="px-6 py-3 bg-blue-50 border-t border-blue-100">
+                <p class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">Resumen de cobro</p>
+                <div class="flex flex-wrap gap-4">
+                    <template x-if="serviciosAEnviar.filter(s => s.moneda === 'PEN').length > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-blue-600">S/ Soles:</span>
+                            <span class="text-sm font-bold text-blue-900"
+                                  x-text="'S/ ' + serviciosAEnviar.filter(s => s.moneda === 'PEN').reduce((acc, s) => acc + parseFloat(s.precio || 0), 0).toFixed(2)">
+                            </span>
+                            <span class="text-xs text-blue-500"
+                                  x-text="'(' + serviciosAEnviar.filter(s => s.moneda === 'PEN').length + ' cliente' + (serviciosAEnviar.filter(s => s.moneda === 'PEN').length !== 1 ? 's' : '') + ')'">
+                            </span>
+                        </div>
+                    </template>
+                    <template x-if="serviciosAEnviar.filter(s => s.moneda === 'USD').length > 0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-green-600">$ Dólares:</span>
+                            <span class="text-sm font-bold text-green-900"
+                                  x-text="'$ ' + serviciosAEnviar.filter(s => s.moneda === 'USD').reduce((acc, s) => acc + parseFloat(s.precio || 0), 0).toFixed(2)">
+                            </span>
+                            <span class="text-xs text-green-600"
+                                  x-text="'(' + serviciosAEnviar.filter(s => s.moneda === 'USD').length + ' cliente' + (serviciosAEnviar.filter(s => s.moneda === 'USD').length !== 1 ? 's' : '') + ')'">
+                            </span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <!-- Footer -->
             <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-between">
                 <div class="text-sm text-gray-600">

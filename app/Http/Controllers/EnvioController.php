@@ -269,7 +269,14 @@ class EnvioController extends Controller
             ->whereDate('fecha_envio', $hoy->format('Y-m-d'))
             ->exists();
 
-        if ($yaEnviadoHoy) {
+        // También verificar si ya está en cola pendiente para hoy
+        $yaEnColaHoy = ColaEnvio::where('cliente_id', $servicio->cliente_id)
+            ->where('tipo_envio', 'orden_pago')
+            ->whereIn('estado', ['pendiente', 'procesando'])
+            ->whereDate('fecha_creacion', $hoy->format('Y-m-d'))
+            ->exists();
+
+        if ($yaEnviadoHoy || $yaEnColaHoy) {
             $debeEnviarse = false;
             $estado = 'ya_enviado';
         }
@@ -359,6 +366,11 @@ class EnvioController extends Controller
                     continue; // Saltar si no se encuentra el servicio
                 }
 
+                // Verificar que el servicio y cliente siguen activos al momento de enviar
+                if ($servicio->estado !== 'activo' || !$servicio->cliente->activo) {
+                    continue;
+                }
+
                 // ⚠️ VALIDACIÓN CRÍTICA: Verificar que NO se haya enviado orden hoy a este cliente
                 $yaEnviadoHoy = EnvioWhatsapp::where('cliente_id', $servicio->cliente_id)
                     ->where('tipo_envio', 'orden_pago')
@@ -367,6 +379,17 @@ class EnvioController extends Controller
 
                 if ($yaEnviadoHoy) {
                     continue; // Saltar este cliente - ya recibió orden hoy
+                }
+
+                // Verificar que NO esté ya en cola pendiente para hoy (evita duplicados)
+                $yaEnColaHoy = ColaEnvio::where('cliente_id', $servicio->cliente_id)
+                    ->where('tipo_envio', 'orden_pago')
+                    ->whereIn('estado', ['pendiente', 'procesando'])
+                    ->whereDate('fecha_creacion', $hoy->format('Y-m-d'))
+                    ->exists();
+
+                if ($yaEnColaHoy) {
+                    continue;
                 }
 
                 $fechaVencimiento = Carbon::parse($servicio->fecha_vencimiento, 'America/Lima');
