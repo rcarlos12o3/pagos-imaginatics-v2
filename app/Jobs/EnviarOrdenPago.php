@@ -61,17 +61,33 @@ class EnviarOrdenPago implements ShouldQueue
                 throw new \Exception('Configuración de WhatsApp incompleta en base de datos');
             }
 
-            // URL completa para envío de medios (Evolution API v2.x)
-            $url = rtrim($apiUrl, '/') . '/message/sendMedia/' . $instancia;
+            $baseUrl = rtrim($apiUrl, '/');
 
-            // Limpiar base64: remover prefijo data:image/png;base64, si existe
+            // Verificar que la instancia esté conectada antes de enviar
+            $estadoResponse = Http::timeout(10)
+                ->withHeaders(['apikey' => $token])
+                ->get("{$baseUrl}/instance/connectionState/{$instancia}");
+
+            if ($estadoResponse->successful()) {
+                $estadoData = $estadoResponse->json();
+                $estado = $estadoData['instance']['state'] ?? $estadoData['state'] ?? null;
+                if ($estado !== 'open') {
+                    throw new \Exception("Instancia WhatsApp desconectada (estado: {$estado}). Reconecta el QR en Evolution API.");
+                }
+            }
+
+            // URL completa para envío de medios (Evolution API v2.x)
+            $url = "{$baseUrl}/message/sendMedia/{$instancia}";
+
+            // Limpiar base64: remover prefijo data:image/jpeg;base64, si existe
             $imagenBase64 = $trabajo->imagen_base64;
             if (strpos($imagenBase64, 'data:image') === 0) {
                 $imagenBase64 = preg_replace('/^data:image\/[a-z]+;base64,/', '', $imagenBase64);
             }
 
             // Enviar a WhatsApp API (Evolution API v2.x)
-            $response = Http::timeout(30)
+            // La imagen se genera como JPEG (canvas.toDataURL('image/jpeg', 0.7))
+            $response = Http::timeout(60)
                 ->withHeaders([
                     'apikey' => $token,
                     'Content-Type' => 'application/json',
@@ -79,7 +95,7 @@ class EnviarOrdenPago implements ShouldQueue
                 ->post($url, [
                     'number' => $trabajo->whatsapp,
                     'mediatype' => 'image',
-                    'mimetype' => 'image/png',
+                    'mimetype' => 'image/jpeg',
                     'caption' => $trabajo->mensaje_texto,
                     'media' => $imagenBase64,
                 ]);

@@ -154,6 +154,41 @@ class EnvioController extends Controller
     }
 
     /**
+     * API: Estado de conexión de la instancia WhatsApp
+     */
+    public function estadoWhatsapp(): JsonResponse
+    {
+        try {
+            $token     = \DB::table('configuracion')->where('clave', 'token_whatsapp')->value('valor');
+            $instancia = \DB::table('configuracion')->where('clave', 'instancia_whatsapp')->value('valor');
+            $apiUrl    = \DB::table('configuracion')->where('clave', 'api_url_whatsapp')->value('valor');
+
+            if (!$token || !$instancia || !$apiUrl) {
+                return response()->json(['conectado' => false, 'estado' => 'sin_configuracion']);
+            }
+
+            $response = \Illuminate\Support\Facades\Http::timeout(8)
+                ->withHeaders(['apikey' => $token])
+                ->get(rtrim($apiUrl, '/') . '/instance/connectionState/' . $instancia);
+
+            if (!$response->successful()) {
+                return response()->json(['conectado' => false, 'estado' => 'error_api']);
+            }
+
+            $data   = $response->json();
+            $estado = $data['instance']['state'] ?? $data['state'] ?? 'desconocido';
+
+            return response()->json([
+                'conectado' => $estado === 'open',
+                'estado'    => $estado,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['conectado' => false, 'estado' => 'error_conexion']);
+        }
+    }
+
+    /**
      * API: Analizar servicios pendientes de envío
      */
     public function analizarEnviosPendientes(): JsonResponse

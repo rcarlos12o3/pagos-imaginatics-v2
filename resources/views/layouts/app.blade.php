@@ -181,8 +181,82 @@
                 <div class="flex items-center gap-4">
                     @yield('actions')
                     <span class="text-sm text-gray-500">{{ now()->format('d M Y') }}</span>
+
+                    <!-- Indicador de estado WhatsApp -->
+                    <div x-data="{
+                            wa: null,
+                            init() {
+                                this.verificar();
+                                setInterval(() => this.verificar(), 60000);
+                            },
+                            async verificar() {
+                                try {
+                                    const r = await fetch('/api/whatsapp/estado');
+                                    this.wa = await r.json();
+                                } catch(e) {
+                                    this.wa = { conectado: false, estado: 'error_conexion' };
+                                }
+                            }
+                         }"
+                         x-init="init()">
+                        <!-- Conectado -->
+                        <span x-show="wa && wa.conectado"
+                              title="WhatsApp conectado"
+                              class="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            WhatsApp
+                        </span>
+                        <!-- Desconectado -->
+                        <span x-show="wa && !wa.conectado"
+                              :title="'WhatsApp desconectado (estado: ' + (wa ? wa.estado : '') + ')'"
+                              class="flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full cursor-default">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            WhatsApp desconectado
+                        </span>
+                    </div>
                 </div>
             </header>
+
+            <!-- Banner WhatsApp desconectado -->
+            <div x-data="{
+                    wa: null,
+                    cerrado: false,
+                    init() {
+                        this.verificar();
+                        setInterval(() => this.verificar(), 60000);
+                    },
+                    async verificar() {
+                        try {
+                            const r = await fetch('/api/whatsapp/estado');
+                            const data = await r.json();
+                            if (data.conectado) this.cerrado = false;
+                            this.wa = data;
+                        } catch(e) {
+                            this.wa = { conectado: false, estado: 'error_conexion' };
+                        }
+                    }
+                 }"
+                 x-init="init()"
+                 x-show="wa && !wa.conectado && !cerrado"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="bg-red-600 text-white px-6 py-2.5 flex items-center justify-between text-sm">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                    <span>
+                        <strong>WhatsApp desconectado</strong> — Los envíos fallarán hasta que reconectes el QR en Evolution API.
+                        <span x-text="wa ? '(estado: ' + wa.estado + ')' : ''" class="opacity-75 ml-1"></span>
+                    </span>
+                </div>
+                <button @click="cerrado = true" class="ml-4 p-1 rounded hover:bg-red-700 transition-colors" title="Cerrar aviso">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
 
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto bg-gray-50 p-6">

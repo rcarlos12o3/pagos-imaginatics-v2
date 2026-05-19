@@ -44,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/op', [EnvioController::class, 'envios'])->name('envios.index');
     Route::get('/api/op/analizar-pendientes', [EnvioController::class, 'analizarEnviosPendientes'])->name('envios.analizar');
     Route::post('/api/op/enviar-ordenes', [EnvioController::class, 'enviarOrdenes'])->name('envios.enviar');
+    Route::get('/api/whatsapp/estado', [EnvioController::class, 'estadoWhatsapp'])->name('whatsapp.estado');
 
     // Consulta RUC
     Route::get('/api/ruc/consultar', [RucController::class, 'consultar'])->name('ruc.consultar');
