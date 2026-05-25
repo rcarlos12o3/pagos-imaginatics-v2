@@ -78,6 +78,8 @@ class PagosPendientesTable extends Component
                 'catalogo_servicios.nombre as servicio_nombre',
                 'catalogo_servicios.categoria as servicio_categoria',
                 'servicios_contratados.precio',
+                'servicios_contratados.monto_abonado',
+                DB::raw('(servicios_contratados.precio - servicios_contratados.monto_abonado) as saldo_restante'),
                 'servicios_contratados.moneda',
                 'servicios_contratados.periodo_facturacion',
                 'servicios_contratados.fecha_vencimiento',
@@ -143,7 +145,7 @@ class PagosPendientesTable extends Component
                 "),
                 'servicios_contratados.cliente_id',
                 'servicios_contratados.moneda',
-                'servicios_contratados.precio'
+                DB::raw('(servicios_contratados.precio - servicios_contratados.monto_abonado) as saldo_restante')
             ])
             ->join('clientes', 'servicios_contratados.cliente_id', '=', 'clientes.id')
             ->whereIn('servicios_contratados.estado', ['activo', 'vencido'])
@@ -156,12 +158,12 @@ class PagosPendientesTable extends Component
             'muy_vencidos' => $serviciosConUrgencia->where('urgencia', 'muy_vencido')->count(),
             'clientes_afectados' => $serviciosConUrgencia->whereIn('urgencia', ['muy_vencido', 'vencido', 'proximo_vencer'])->pluck('cliente_id')->unique()->count(),
             'monto_vencido' => [
-                'PEN' => $serviciosConUrgencia->whereIn('urgencia', ['muy_vencido', 'vencido'])->where('moneda', 'PEN')->sum('precio'),
-                'USD' => $serviciosConUrgencia->whereIn('urgencia', ['muy_vencido', 'vencido'])->where('moneda', 'USD')->sum('precio')
+                'PEN' => $serviciosConUrgencia->whereIn('urgencia', ['muy_vencido', 'vencido'])->where('moneda', 'PEN')->sum('saldo_restante'),
+                'USD' => $serviciosConUrgencia->whereIn('urgencia', ['muy_vencido', 'vencido'])->where('moneda', 'USD')->sum('saldo_restante')
             ],
             'monto_proximo' => [
-                'PEN' => $serviciosConUrgencia->where('urgencia', 'proximo_vencer')->where('moneda', 'PEN')->sum('precio'),
-                'USD' => $serviciosConUrgencia->where('urgencia', 'proximo_vencer')->where('moneda', 'USD')->sum('precio')
+                'PEN' => $serviciosConUrgencia->where('urgencia', 'proximo_vencer')->where('moneda', 'PEN')->sum('saldo_restante'),
+                'USD' => $serviciosConUrgencia->where('urgencia', 'proximo_vencer')->where('moneda', 'USD')->sum('saldo_restante')
             ]
         ];
 

@@ -88,22 +88,27 @@ class PagoController extends Controller
                 'servicios_pagados' => $validated['servicios_pagados'] ?? []
             ]);
 
-            // Si hay servicios asociados, actualizar su fecha de último pago y renovar vencimiento
+            // Si hay servicios asociados, acumular abono y renovar solo si se cubre el precio completo
             if (!empty($validated['servicios_pagados'])) {
                 foreach ($validated['servicios_pagados'] as $servicioId) {
                     $servicio = ServicioContratado::find($servicioId);
 
                     if ($servicio) {
-                        // Actualizar fecha de última factura
+                        $nuevoAbono = (float) $servicio->monto_abonado + (float) $validated['monto_pagado'];
                         $servicio->fecha_ultima_factura = $validated['fecha_pago'];
 
-                        // Renovar fecha de vencimiento según el periodo
-                        if ($servicio->auto_renovacion) {
-                            $nuevaFechaVencimiento = $this->calcularNuevaFechaVencimiento(
-                                $servicio->fecha_vencimiento,
-                                $servicio->periodo_facturacion
-                            );
-                            $servicio->fecha_vencimiento = $nuevaFechaVencimiento;
+                        if ($nuevoAbono >= (float) $servicio->precio) {
+                            // Pago completo: renovar vencimiento y resetear abono
+                            if ($servicio->auto_renovacion) {
+                                $servicio->fecha_vencimiento = $this->calcularNuevaFechaVencimiento(
+                                    $servicio->fecha_vencimiento,
+                                    $servicio->periodo_facturacion
+                                );
+                            }
+                            $servicio->monto_abonado = 0;
+                        } else {
+                            // Pago parcial: acumular sin renovar
+                            $servicio->monto_abonado = $nuevoAbono;
                         }
 
                         $servicio->save();

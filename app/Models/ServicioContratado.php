@@ -16,6 +16,7 @@ class ServicioContratado extends Model
         'cliente_id',
         'servicio_id',
         'precio',
+        'monto_abonado',
         'moneda',
         'periodo_facturacion',
         'fecha_inicio',
@@ -32,6 +33,7 @@ class ServicioContratado extends Model
 
     protected $casts = [
         'precio' => 'decimal:2',
+        'monto_abonado' => 'decimal:2',
         'fecha_inicio' => 'date',
         'fecha_vencimiento' => 'date',
         'fecha_ultima_factura' => 'date',

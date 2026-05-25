@@ -133,7 +133,16 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $servicio->moneda }} {{ number_format($servicio->precio, 2) }}</div>
+                                @if($servicio->monto_abonado > 0)
+                                    <div class="text-sm font-medium text-orange-600">
+                                        {{ $servicio->moneda }} {{ number_format($servicio->saldo_restante, 2) }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        Abonado: {{ number_format($servicio->monto_abonado, 2) }} / {{ number_format($servicio->precio, 2) }}
+                                    </div>
+                                @else
+                                    <div class="text-sm font-medium text-gray-900">{{ $servicio->moneda }} {{ number_format($servicio->precio, 2) }}</div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($servicio->fecha_vencimiento)->format('d/m/Y') }}</div>
