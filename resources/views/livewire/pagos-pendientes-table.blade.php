@@ -33,7 +33,7 @@
 
     <!-- Filtros con búsqueda en tiempo real -->
     <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Urgencia</label>
                 <select wire:model.live.debounce.300ms="filtro"
@@ -54,6 +54,17 @@
                             {{ $servicio->nombre }}
                         </option>
                     @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Periodo</label>
+                <select wire:model.live.debounce.300ms="periodo"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Todos los Periodos</option>
+                    <option value="mensual">Mensual</option>
+                    <option value="trimestral">Trimestral</option>
+                    <option value="semestral">Semestral</option>
+                    <option value="anual">Anual</option>
                 </select>
             </div>
             <div>
@@ -87,7 +98,7 @@
     </div>
 
     <!-- Indicador de carga sutil en la esquina -->
-    <div wire:loading.delay.longer wire:target="busqueda,filtro,servicioId"
+    <div wire:loading.delay.longer wire:target="busqueda,filtro,servicioId,periodo"
          class="fixed top-20 right-6 z-50">
         <div class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse">
             <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -200,7 +211,7 @@
                                     </svg>
                                     <p class="text-lg font-medium">No hay resultados</p>
                                     <p class="text-sm mt-1">
-                                        @if($busqueda || $filtro !== 'todos' || $servicioId)
+                                        @if($busqueda || $filtro !== 'todos' || $servicioId || $periodo)
                                             Intenta cambiar los filtros de búsqueda
                                         @else
                                             No hay pagos pendientes en este momento

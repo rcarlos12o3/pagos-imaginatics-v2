@@ -21,6 +21,9 @@ class PagosPendientesTable extends Component
     #[Debounce(300)]
     public $servicioId = '';
 
+    #[Debounce(300)]
+    public $periodo = '';
+
     #[Debounce(500)]
     public $busqueda = '';
 
@@ -37,6 +40,11 @@ class PagosPendientesTable extends Component
     }
 
     public function updatingServicioId()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPeriodo()
     {
         $this->resetPage();
     }
@@ -106,6 +114,11 @@ class PagosPendientesTable extends Component
         // Filtrar por servicio
         if ($this->servicioId) {
             $query->where('servicios_contratados.servicio_id', $this->servicioId);
+        }
+
+        // Filtrar por periodo
+        if ($this->periodo) {
+            $query->where('servicios_contratados.periodo_facturacion', $this->periodo);
         }
 
         // Buscar por cliente
