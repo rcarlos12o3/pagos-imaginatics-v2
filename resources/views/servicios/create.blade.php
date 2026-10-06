@@ -72,10 +72,11 @@
             </div>
         </div>
 
+        <div x-data="vencimientoSugerido(@js(old('periodo_facturacion', 'anual')), @js(old('fecha_inicio', date('Y-m-d'))), @js(old('fecha_vencimiento')))" class="space-y-6">
         <!-- Periodo de Facturación -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Periodo de Facturación *</label>
-            <select name="periodo_facturacion" required
+            <select name="periodo_facturacion" required x-model="periodo" @change="sugerir()"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="mensual" {{ old('periodo_facturacion') == 'mensual' ? 'selected' : '' }}>Mensual</option>
                 <option value="trimestral" {{ old('periodo_facturacion') == 'trimestral' ? 'selected' : '' }}>Trimestral</option>
@@ -91,7 +92,7 @@
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio *</label>
-                <input type="date" name="fecha_inicio" value="{{ old('fecha_inicio', date('Y-m-d')) }}" required
+                <input type="date" name="fecha_inicio" x-model="inicio" @change="sugerir()" required
                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 @error('fecha_inicio')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -100,12 +101,16 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
-                <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}" required
+                <input type="date" name="fecha_vencimiento" x-model="vencimiento" required
                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <p x-show="vencimiento && vencimiento === sugerida" class="mt-1 text-xs text-gray-500">
+                    Sugerida según el periodo (+<span x-text="meses()"></span> <span x-text="meses() === 1 ? 'mes' : 'meses'"></span>). Puedes editarla.
+                </p>
                 @error('fecha_vencimiento')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+        </div>
         </div>
 
         <!-- Auto Renovación -->
@@ -139,3 +144,37 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function vencimientoSugerido(periodo, inicio, vencimiento) {
+        return {
+            periodo,
+            inicio,
+            vencimiento: vencimiento || '',
+            sugerida: '',
+            init() {
+                if (!this.vencimiento) this.sugerir();
+                else this.sugerida = this.calcular();
+            },
+            meses() {
+                return { mensual: 1, trimestral: 3, semestral: 6, anual: 12 }[this.periodo] || 0;
+            },
+            calcular() {
+                if (!this.inicio || !this.meses()) return '';
+                const [y, m, d] = this.inicio.split('-').map(Number);
+                // Vence el día anterior al mismo día del mes destino (06/10 → 05/10).
+                // Si ese día no existe en el mes destino (ej. 30 en febrero), usar el último día del mes.
+                // Si inicia el día 1, d - 1 = 0 da el último día del mes anterior.
+                const ultimoDia = new Date(y, m - 1 + this.meses() + 1, 0).getDate();
+                const fecha = new Date(y, m - 1 + this.meses(), Math.min(d - 1, ultimoDia));
+                return [fecha.getFullYear(), String(fecha.getMonth() + 1).padStart(2, '0'), String(fecha.getDate()).padStart(2, '0')].join('-');
+            },
+            sugerir() {
+                this.sugerida = this.calcular();
+                this.vencimiento = this.sugerida;
+            },
+        };
+    }
+</script>
+@endpush
