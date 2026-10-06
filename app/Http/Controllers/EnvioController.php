@@ -328,6 +328,8 @@ class EnvioController extends Controller
             'servicio_nombre' => $servicio->catalogoServicio->nombre,
             'periodicidad' => $periodo,
             'precio' => $servicio->precio,
+            'monto_abonado' => $servicio->monto_abonado,
+            'saldo_restante' => number_format($servicio->precio - $servicio->monto_abonado, 2, '.', ''),
             'moneda' => $servicio->moneda,
             'fecha_inicio' => $fechaInicio->format('d/m/Y'),
             'fecha_vencimiento_periodo_actual' => $fechaVencimiento->format('d/m/Y'),
@@ -430,6 +432,8 @@ class EnvioController extends Controller
                 $fechaVencimiento = Carbon::parse($servicio->fecha_vencimiento, 'America/Lima');
                 $diasRestantes = $hoy->diffInDays($fechaVencimiento, false);
 
+                $saldoRestante = number_format($servicio->precio - $servicio->monto_abonado, 2, '.', '');
+
                 $trabajo = ColaEnvio::create([
                     'sesion_id' => $sesion->id,
                     'cliente_id' => $servicio->cliente_id,
@@ -442,10 +446,10 @@ class EnvioController extends Controller
                     'ruc' => $servicio->cliente->ruc,
                     'razon_social' => $servicio->cliente->razon_social,
                     'whatsapp' => $servicio->cliente->whatsapp,
-                    'monto' => $servicio->precio,
+                    'monto' => $saldoRestante,
                     'fecha_vencimiento' => $fechaVencimiento,
                     'tipo_servicio' => $servicio->periodo_facturacion,
-                    'mensaje_texto' => "Hola! 👋\n\nLe recordamos que tiene una orden de pago pendiente por *{$servicio->moneda} {$servicio->precio}* que vence el {$fechaVencimiento->format('d/m/Y')}.\n\nPor favor, realice el pago a las cuentas indicadas en la imagen adjunta.\n\nGracias! 🙏",
+                    'mensaje_texto' => "Hola! 👋\n\nLe recordamos que tiene una orden de pago pendiente por *{$servicio->moneda} {$saldoRestante}* que vence el {$fechaVencimiento->format('d/m/Y')}.\n\nPor favor, realice el pago a las cuentas indicadas en la imagen adjunta.\n\nGracias! 🙏",
                     'imagen_base64' => $servicioData['imagen_base64'],
                     'dias_restantes' => (int) $diasRestantes,
                     'fecha_creacion' => $hoy,

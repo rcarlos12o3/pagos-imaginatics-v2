@@ -341,7 +341,10 @@
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800" x-text="servicio.periodicidad"></span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <span x-text="servicio.moneda"></span> <span x-text="servicio.precio"></span>
+                                <div :class="servicio.monto_abonado > 0 ? 'text-orange-600 font-medium' : ''">
+                                    <span x-text="servicio.moneda"></span> <span x-text="servicio.saldo_restante"></span>
+                                </div>
+                                <div x-show="servicio.monto_abonado > 0" class="text-xs text-gray-500" x-text="'Abonado: ' + servicio.monto_abonado + ' / ' + servicio.precio"></div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="servicio.fecha_vencimiento_periodo_actual"></td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -411,7 +414,7 @@
                         <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-medium" x-text="index + 1"></span>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 truncate" x-text="servicio.empresa"></p>
-                            <p class="text-xs text-gray-500" x-text="servicio.ruc + ' • ' + servicio.moneda + ' ' + servicio.precio"></p>
+                            <p class="text-xs text-gray-500" x-text="servicio.ruc + ' • ' + servicio.moneda + ' ' + servicio.saldo_restante"></p>
                         </div>
                         <span class="flex-shrink-0 text-xs px-2 py-1 rounded-full"
                               :class="servicio.dias_hasta_vencer < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
@@ -428,7 +431,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-blue-600">S/ Soles:</span>
                             <span class="text-sm font-bold text-blue-900"
-                                  x-text="'S/ ' + serviciosAEnviar.filter(s => s.moneda === 'PEN').reduce((acc, s) => acc + parseFloat(s.precio || 0), 0).toFixed(2)">
+                                  x-text="'S/ ' + serviciosAEnviar.filter(s => s.moneda === 'PEN').reduce((acc, s) => acc + parseFloat(s.saldo_restante || 0), 0).toFixed(2)">
                             </span>
                             <span class="text-xs text-blue-500"
                                   x-text="'(' + serviciosAEnviar.filter(s => s.moneda === 'PEN').length + ' cliente' + (serviciosAEnviar.filter(s => s.moneda === 'PEN').length !== 1 ? 's' : '') + ')'">
@@ -439,7 +442,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-green-600">$ Dólares:</span>
                             <span class="text-sm font-bold text-green-900"
-                                  x-text="'$ ' + serviciosAEnviar.filter(s => s.moneda === 'USD').reduce((acc, s) => acc + parseFloat(s.precio || 0), 0).toFixed(2)">
+                                  x-text="'$ ' + serviciosAEnviar.filter(s => s.moneda === 'USD').reduce((acc, s) => acc + parseFloat(s.saldo_restante || 0), 0).toFixed(2)">
                             </span>
                             <span class="text-xs text-green-600"
                                   x-text="'(' + serviciosAEnviar.filter(s => s.moneda === 'USD').length + ' cliente' + (serviciosAEnviar.filter(s => s.moneda === 'USD').length !== 1 ? 's' : '') + ')'">

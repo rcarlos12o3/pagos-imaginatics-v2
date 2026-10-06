@@ -105,7 +105,7 @@ async function generarCanvasOrdenPago(servicio) {
         ctx.font = '14px Arial';
         ctx.fillText('Cliente: ' + servicio.empresa, 30, 175);
         ctx.fillText('RUC: ' + servicio.ruc, 30, 195);
-        ctx.fillText('Monto a pagar: ' + servicio.moneda + ' ' + servicio.precio, 30, 215);
+        ctx.fillText('Monto a pagar: ' + servicio.moneda + ' ' + (servicio.saldo_restante ?? servicio.precio), 30, 215);
 
         // Cuentas bancarias
         ctx.fillStyle = CONFIG_IMAGINATICS.COLORES.PRIMARIO;
